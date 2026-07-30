@@ -49,6 +49,7 @@ alwaysApply: true
 - HU-006 registro de usuario + membresía digital
 - HU-007 login JWT + refresh + logout + reset password
 - HU-008 perfil get/update + membresía/beneficios/QR
+- HU-009 funciones por película + precios (GET /movies/:id/functions, GET /functions/:id/prices)
 
 ## Siguiente
-- HU-009 selección de función y formato de proyección
+- HU-010 selección interactiva de sillas

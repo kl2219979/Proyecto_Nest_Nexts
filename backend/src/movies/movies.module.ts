@@ -11,12 +11,15 @@ import { CastMember } from './entities/cast-member.entity';
 import { MovieCityRelease } from './entities/movie-city-release.entity';
 import { Room } from './entities/room.entity';
 import { Showtime } from './entities/showtime.entity';
+import { FunctionsController } from './functions.controller';
 import { MoviesController } from './movies.controller';
 import { MoviesService } from './movies.service';
+import { ShowtimesService } from './showtimes.service';
 import { seedMovies } from './movies.seed';
 
 /**
- * Módulo de películas: cartelera (HU-003) + detalle (HU-004) + estrenos (HU-005).
+ * Módulo de películas: cartelera (HU-003) + detalle (HU-004) + estrenos (HU-005)
+ * + selección de función/precios (HU-009).
  *
  * Importa `LocationsModule` (seed geo) y `NotificationsModule` (RN-020).
  */
@@ -35,9 +38,9 @@ import { seedMovies } from './movies.seed';
       Cinema,
     ]),
   ],
-  controllers: [MoviesController],
-  providers: [MoviesService],
-  exports: [MoviesService],
+  controllers: [MoviesController, FunctionsController],
+  providers: [MoviesService, ShowtimesService],
+  exports: [MoviesService, ShowtimesService],
 })
 export class MoviesModule implements OnModuleInit {
   private readonly logger = new Logger(MoviesModule.name);

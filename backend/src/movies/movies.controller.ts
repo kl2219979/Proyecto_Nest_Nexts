@@ -12,12 +12,16 @@ import {
   MovieDetailResponse,
   MovieRecommendationsResponse,
 } from './dto/movie-detail-response';
+import { MovieFunctionsQueryDto } from './dto/movie-functions-query.dto';
+import { MovieFunctionsResponse } from './dto/movie-functions-response';
 import { UpcomingQueryDto } from './dto/upcoming-query.dto';
 import { UpcomingMoviesResponse } from './dto/upcoming-response';
 import { MoviesService } from './movies.service';
+import { ShowtimesService } from './showtimes.service';
 
 /**
- * Endpoints de cartelera (HU-003), detalle (HU-004) y próximos estrenos (HU-005).
+ * Endpoints de cartelera (HU-003), detalle (HU-004), estrenos (HU-005)
+ * y selección de función (HU-009).
  *
  * Rutas finales (con prefijo global):
  * - `GET /api/v1/movies`
@@ -25,16 +29,22 @@ import { MoviesService } from './movies.service';
  * - `GET /api/v1/movies/upcoming`
  * - `GET /api/v1/movies/:id`
  * - `GET /api/v1/movies/:id/recommendations`
+ * - `GET /api/v1/movies/:id/functions`
  *
- * Orden de declaración: rutas estáticas (`today`, `upcoming`) antes de `:id`.
+ * Orden de declaración: rutas estáticas (`today`, `upcoming`) y
+ * subrutas (`recommendations`, `functions`) antes de `:id`.
  */
 @ApiTags('Movies')
 @Controller('movies')
 export class MoviesController {
   /**
-   * @param moviesService - Servicio de cartelera, detalle y estrenos.
+   * @param moviesService - Cartelera, detalle y estrenos.
+   * @param showtimesService - Selección de función (HU-009).
    */
-  constructor(private readonly moviesService: MoviesService) {}
+  constructor(
+    private readonly moviesService: MoviesService,
+    private readonly showtimesService: ShowtimesService,
+  ) {}
 
   /**
    * Cartelera del día actual en la ciudad.
@@ -99,6 +109,30 @@ export class MoviesController {
     @Query() query: MovieDetailQueryDto,
   ): Promise<MovieRecommendationsResponse> {
     return this.moviesService.getRecommendations(id, query);
+  }
+
+  /**
+   * Funciones seleccionables de una película (HU-009).
+   *
+   * Declarada antes de `:id` para que Nest no trate `functions` como UUID.
+   *
+   * @param id - UUID de la película.
+   * @param query - `cityId` + filtros (fecha, formato, complejo, …).
+   * @returns {Promise<MovieFunctionsResponse>} Funciones + facetas.
+   */
+  @Get(':id/functions')
+  @ApiOperation({
+    summary: 'Funciones de una película para compra',
+    description:
+      'RN-035 solo futuras · RN-036 solo activas · filtros por fecha/complejo/formato/idioma/audio · facetas para UI.',
+  })
+  @ApiParam({ name: 'id', format: 'uuid' })
+  @ApiOkResponse({ description: 'Listado de funciones seleccionables' })
+  getMovieFunctions(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: MovieFunctionsQueryDto,
+  ): Promise<MovieFunctionsResponse> {
+    return this.showtimesService.listFunctionsForMovie(id, query);
   }
 
   /**

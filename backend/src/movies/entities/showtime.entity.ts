@@ -10,10 +10,12 @@ import { Movie } from './movie.entity';
 import { Room } from './room.entity';
 
 /**
- * Función / horario de proyección (HU-003).
+ * Función / horario de proyección (HU-003 / HU-009).
  *
  * Une película + sala + fecha/hora + formato + idioma/audio.
- * RN-010: solo se muestran funciones con `isActive = true`.
+ * RN-010 / RN-036: solo se muestran funciones con `isActive = true`.
+ * RN-035: en selección de compra solo futuras (`startsAt > now`).
+ * RN-037: `price` varía por formato, sala y horario.
  */
 @Entity('showtimes')
 export class Showtime {
@@ -45,9 +47,9 @@ export class Showtime {
   soldSeats!: number;
 
   /**
-   * Precio de la entrada para esta función (HU-004).
-   * En el detalle se agrega por formato (`pricesByFormat`).
-   * Precios dinámicos más ricos llegan en HU-009.
+   * Precio de la entrada para esta función (HU-004 / HU-009).
+   * Puede diferir por formato, sala y horario (RN-037).
+   * Desglose en `GET /functions/:id/prices`.
    */
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   price!: number;

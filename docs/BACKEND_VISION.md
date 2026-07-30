@@ -32,7 +32,8 @@
 | HU-006 Registro + membresía | **Hecho** | POST /auth/register + /activate · membresía/wallet · RN-021…026 |
 | HU-007 Login JWT | **Hecho** | login/refresh/logout/forgot/reset · RN-027…031 · auditoría |
 | HU-008 Perfil + membresía | **Hecho** | GET/PUT /profile · GET /membership · QR · RN-032…034 |
-| HU-009 … HU-029 | Pendiente | Ver sección 3 |
+| HU-009 Funciones / formato | **Hecho** | GET /movies/:id/functions · GET /functions/:id/prices · RN-035…038 |
+| HU-010 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -97,6 +98,14 @@
 - Historiales compras/puntos/reservas = arrays vacíos (stubs hasta HU-014 / HU-023 / carrito).
 - Beneficios centralizados en `membership/membership-benefits.ts` (reuso login + perfil).
 - Guía `docs/features/hu-008-profile-membership.md`.
+
+#### HU-009 — Selección de función y formato de proyección
+- `ShowtimesService` + `FunctionsController` en módulo `movies`.
+- `GET /movies/:id/functions?cityId=` con filtros (fecha, complejo, formato, idioma, audio, sala, available).
+- RN-035 solo futuras; RN-036 solo activas; disponibilidad de sillas (`availableSeats` / `isSelectable`).
+- Facetas en la respuesta para cambiar formato/filtros sin recargar el catálogo.
+- `GET /functions/:id/prices`: precio por función (RN-037) + `promotions: []` (RN-038 stub → HU-026).
+- Guía `docs/features/hu-009-functions.md`.
 
 ---
 
@@ -272,6 +281,7 @@ Health OK
 - HU-006 guía: `docs/features/hu-006-auth-register.md`
 - HU-007 guía: `docs/features/hu-007-auth-login.md`
 - HU-008 guía: `docs/features/hu-008-profile-membership.md`
+- HU-009 guía: `docs/features/hu-009-functions.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -285,5 +295,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-009 Selección de Función y Formato de Proyección.
+Siguiente: HU-010 Selección Interactiva de Sillas.
 ```
