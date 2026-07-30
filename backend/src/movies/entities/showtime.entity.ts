@@ -54,6 +54,13 @@ export class Showtime {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   price!: number;
 
+  /**
+   * Máximo de sillas por selección/reserva (HU-010).
+   * Configurable por administración (CRUD → HU-020); default 8.
+   */
+  @Column({ type: 'int', default: 8 })
+  maxSeatsPerOrder!: number;
+
   /** Solo funciones activas entran a cartelera (RN-010). */
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;

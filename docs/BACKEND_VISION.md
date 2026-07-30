@@ -33,7 +33,9 @@
 | HU-007 Login JWT | **Hecho** | login/refresh/logout/forgot/reset · RN-027…031 · auditoría |
 | HU-008 Perfil + membresía | **Hecho** | GET/PUT /profile · GET /membership · QR · RN-032…034 |
 | HU-009 Funciones / formato | **Hecho** | GET /movies/:id/functions · GET /functions/:id/prices · RN-035…038 |
-| HU-010 … HU-029 | Pendiente | Ver sección 3 |
+| HU-010 Selección de sillas | **Hecho** | GET/POST /functions/:id/seats · reservations · RN-039…043 |
+| HU-011 Carrito de compras | **Hecho** | CRUD /cart · apply-membership/promo · RN-044…048 |
+| HU-012 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -106,6 +108,23 @@
 - Facetas en la respuesta para cambiar formato/filtros sin recargar el catálogo.
 - `GET /functions/:id/prices`: precio por función (RN-037) + `promotions: []` (RN-038 stub → HU-026).
 - Guía `docs/features/hu-009-functions.md`.
+
+#### HU-010 — Selección interactiva de sillas
+- Módulo `backend/src/seats/`: entidades `Seat`, `SeatLock`, `SeatLockAudit`.
+- `Showtime.maxSeatsPerOrder` (default 8); seed de planos por sala + SOLD alineado a `soldSeats`.
+- `GET /functions/:id/seats` (JWT opcional → SELECTED / mySelection).
+- `POST /functions/:id/seats` lock 10 min (RN-039) + resumen; unique anti doble-venta (RN-043).
+- `GET /reservations` · `DELETE /reservations/release-seats`; expiración perezosa (RN-040).
+- RN-041 ocupadas/inhabilitadas; RN-042 preferenciales con `acknowledgePreferential`.
+- Guía `docs/features/hu-010-seats.md`.
+
+#### HU-011 — Administración del carrito de compras
+- Módulo `backend/src/cart/`: entidades `Cart`, `CartTicketItem`, `CartSnackItem`.
+- Endpoints JWT: `POST/GET/PUT/DELETE /cart`, `POST /cart/apply-membership`, `POST /cart/apply-promo`.
+- RN-044 un ACTIVE por usuario; RN-045 extiende locks con actividad del carrito; RN-046 TTL 10 min.
+- RN-047 descuento membresía automático (`benefitsForLevel`); RN-048 promos demo no apilables.
+- Snacks en carrito vía `PUT` (estructura); catálogo/stock → HU-012; giftcard saldo → HU-018.
+- Guía `docs/features/hu-011-cart.md`.
 
 ---
 
@@ -282,6 +301,8 @@ Health OK
 - HU-007 guía: `docs/features/hu-007-auth-login.md`
 - HU-008 guía: `docs/features/hu-008-profile-membership.md`
 - HU-009 guía: `docs/features/hu-009-functions.md`
+- HU-010 guía: `docs/features/hu-010-seats.md`
+- HU-011 guía: `docs/features/hu-011-cart.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -295,5 +316,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-010 Selección Interactiva de Sillas.
+Siguiente: HU-012 Compra de Productos de Confitería.
 ```

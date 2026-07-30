@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { CartModule } from './cart/cart.module';
 import databaseConfig from './config/database.config';
 import { validateEnv } from './config/validate-env';
 import { HealthModule } from './health/health.module';
@@ -12,6 +13,7 @@ import { MembershipModule } from './membership/membership.module';
 import { MoviesModule } from './movies/movies.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProfileModule } from './profile/profile.module';
+import { SeatsModule } from './seats/seats.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -104,6 +106,10 @@ import { ProfileModule } from './profile/profile.module';
     AuthModule,
     /** Perfil y preferencias del usuario autenticado (HU-008). */
     ProfileModule,
+    /** Mapa de sillas + locks temporales (HU-010). */
+    SeatsModule,
+    /** Carrito de compras entradas + snacks (HU-011). */
+    CartModule,
   ],
   providers: [
     /**

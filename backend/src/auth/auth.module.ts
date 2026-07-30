@@ -16,6 +16,7 @@ import { UserProfile } from './entities/user-profile.entity';
 import { User } from './entities/user.entity';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 import { JwtStrategy } from './jwt/jwt.strategy';
+import { OptionalJwtAuthGuard } from './jwt/optional-jwt-auth.guard';
 
 /**
  * Módulo de autenticación (HU-006 registro + HU-007 sesión JWT).
@@ -55,7 +56,7 @@ import { JwtStrategy } from './jwt/jwt.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, CaptchaService, JwtStrategy, JwtAuthGuard],
-  exports: [AuthService, JwtModule, PassportModule, JwtAuthGuard],
+  providers: [AuthService, CaptchaService, JwtStrategy, JwtAuthGuard, OptionalJwtAuthGuard],
+  exports: [AuthService, JwtModule, PassportModule, JwtAuthGuard, OptionalJwtAuthGuard],
 })
 export class AuthModule {}

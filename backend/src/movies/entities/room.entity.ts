@@ -32,8 +32,8 @@ export class Room {
 
   /**
    * Capacidad total de butacas.
-   * En HU-003 sirve para calcular “agotada” (RN-011);
-   * el mapa de sillas llega en HU-010.
+   * Agotada ≈ `soldSeats >= capacity` (RN-011);
+   * el plano físico vive en `seats` (HU-010).
    */
   @Column({ type: 'int' })
   capacity!: number;

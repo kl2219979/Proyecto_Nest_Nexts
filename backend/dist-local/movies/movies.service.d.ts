@@ -1,0 +1,47 @@
+import { Repository } from 'typeorm';
+import { City } from '../locations/entities/city.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { BillboardQueryDto } from './dto/billboard-query.dto';
+import { BillboardResponse } from './dto/billboard-response';
+import { MovieDetailQueryDto } from './dto/movie-detail-query.dto';
+import { MovieDetailResponse, MovieRecommendationsResponse } from './dto/movie-detail-response';
+import { UpcomingQueryDto } from './dto/upcoming-query.dto';
+import { UpcomingMoviesResponse } from './dto/upcoming-response';
+import { Movie } from './entities/movie.entity';
+import { MovieCityRelease } from './entities/movie-city-release.entity';
+import { Showtime } from './entities/showtime.entity';
+import { MovieStatus } from './enums/movie.enums';
+export declare class MoviesService {
+    private readonly movieRepo;
+    private readonly showtimeRepo;
+    private readonly cityRepo;
+    private readonly releaseRepo;
+    private readonly notificationsService;
+    constructor(movieRepo: Repository<Movie>, showtimeRepo: Repository<Showtime>, cityRepo: Repository<City>, releaseRepo: Repository<MovieCityRelease>, notificationsService: NotificationsService);
+    getWeeklyBillboard(query: BillboardQueryDto): Promise<BillboardResponse>;
+    getTodayBillboard(query: BillboardQueryDto): Promise<BillboardResponse>;
+    getUpcoming(query: UpcomingQueryDto): Promise<UpcomingMoviesResponse>;
+    promoteToNowShowing(movieId: string): Promise<{
+        movieId: string;
+        status: MovieStatus;
+        notifiedCount: number;
+    }>;
+    getMovieDetail(movieId: string, query: MovieDetailQueryDto): Promise<MovieDetailResponse>;
+    getRecommendations(movieId: string, query: MovieDetailQueryDto): Promise<MovieRecommendationsResponse>;
+    private buildBillboard;
+    private assertCityExists;
+    private resolveCityReleaseDate;
+    private findCityReleaseDate;
+    private daysUntil;
+    private findFutureShowtimesForMovie;
+    private movieIdsWithFutureShowtimesInCity;
+    private toDetailShowtime;
+    private aggregatePricesByFormat;
+    private resolveWeekWindow;
+    private resolveDayBounds;
+    private assertDateInWindow;
+    private findShowtimes;
+    private groupByMovie;
+    private formatLocalDate;
+    private parseLocalDate;
+}
