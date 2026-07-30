@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -35,6 +35,22 @@ async function bootstrap(): Promise<void> {
    * Ejemplo: un `@Controller('health')` queda en `/api/v1/health`.
    */
   app.setGlobalPrefix('api/v1');
+
+  /**
+   * ValidationPipe global:
+   * - `whitelist`: elimina propiedades no declaradas en el DTO
+   * - `forbidNonWhitelisted`: error si mandan campos extra
+   * - `transform`: convierte tipos (string → number/UUID class, etc.)
+   *
+   * Así los `@Body()` llegan ya validados por `class-validator`.
+   */
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   /**
    * CORS: permite que un frontend (otro origen/puerto) llame a esta API.

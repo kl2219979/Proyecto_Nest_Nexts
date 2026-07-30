@@ -1,0 +1,48 @@
+---
+description: Multicine backend — contexto, backlog y protocolo por HU
+alwaysApply: true
+---
+
+# Multicine Backend — reglas de agente
+
+## Fuente de verdad
+- Visión y estado: `docs/BACKEND_VISION.md`
+- Backlog ordenado: `recursos/PRODUCT_BACKLOG_ORDENADO.md`
+- No inventar features, endpoints ni entidades fuera de esos documentos.
+
+## Temperatura baja
+- Implementar solo lo de la HU en curso.
+- Preferir lo simple y explícito; sin refactors colaterales.
+- Si algo es ambiguo, acotar al texto de la HU / BACKEND_VISION.
+
+## Stack
+- NestJS + TypeORM + PostgreSQL + Docker Compose
+- Prefijo API: `/api/v1`
+- Documentación educativa (JSDoc) en clases y métodos
+
+## SOLID y patrones de diseño
+- El código **debe** respetar los principios **SOLID** (responsabilidad única, abierto/cerrado, sustitución de Liskov, segregación de interfaces, inversión de dependencias). Nest ya favorece DI (D); no forzar abstracciones de más.
+- Usar **patrones de diseño solo cuando sean estrictamente necesarios** (un problema concreto de extensión, acoplamiento o duplicación). No aplicar patrones “por decorar”.
+- Si se usa un patrón, documentarlo en JSDoc de la clase/módulo con:
+  1. **Nombre del patrón** (ej. Strategy, Factory, Repository, Adapter).
+  2. **Problema que resuelve** (1–2 frases).
+- Preferir el estilo Controller → Service → Repository de Nest/TypeORM antes que inventar capas extra.
+
+## Modelo de base de datos
+- Diseño **incremental por HU**: solo entidades/campos que la historia en curso necesita.
+- **No** exigir ni construir el ERD / esquema completo al inicio del proyecto.
+- Reutilizar y extender lo ya modelado; no inventar tablas “por si acaso”.
+- Al cerrar la HU, reflejar entidades nuevas en la bitácora de `docs/BACKEND_VISION.md` si aplica.
+
+## Ciclo por historia de usuario
+1. Leer `docs/BACKEND_VISION.md` (Estado + Bitácora + sección de la HU).
+2. Implementar la HU pendiente indicada.
+3. Al terminar: actualizar **Estado** y **Bitácora** en `docs/BACKEND_VISION.md`.
+4. Indicar al usuario que abra un **chat nuevo** con el prompt de la sección 9 de ese archivo.
+
+## Ya hecho
+- HU-001 infraestructura
+- HU-002 locations (countries/departments/cities + POST /users/location)
+
+## Siguiente
+- HU-003 cartelera semanal

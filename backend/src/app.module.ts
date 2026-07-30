@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import databaseConfig from './config/database.config';
 import { validateEnv } from './config/validate-env';
 import { HealthModule } from './health/health.module';
+import { LocationsModule } from './locations/locations.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -60,7 +61,7 @@ import { HealthModule } from './health/health.module';
         database: configService.get<string>('database.database'),
         /**
          * Carga automáticamente entidades registradas con `@Entity()`
-         * en módulos feature (aún no hay entidades en HU-001).
+         * en módulos feature (`LocationsModule`, etc.).
          */
         autoLoadEntities: true,
         /**
@@ -71,8 +72,10 @@ import { HealthModule } from './health/health.module';
       }),
     }),
 
-    /** Primer módulo funcional: health check (HU-001). */
+    /** Health check (HU-001). */
     HealthModule,
+    /** Catálogo geográfico País → Departamento → Ciudad (HU-002). */
+    LocationsModule,
   ],
 })
 export class AppModule {}
