@@ -12,6 +12,7 @@ import { LocationsModule } from './locations/locations.module';
 import { MembershipModule } from './membership/membership.module';
 import { MoviesModule } from './movies/movies.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PaymentsModule } from './payments/payments.module';
 import { ProfileModule } from './profile/profile.module';
 import { SeatsModule } from './seats/seats.module';
 import { SnacksModule } from './snacks/snacks.module';
@@ -113,6 +114,8 @@ import { SnacksModule } from './snacks/snacks.module';
     SnacksModule,
     /** Carrito de compras entradas + snacks (HU-011 / HU-012). */
     CartModule,
+    /** Pagos seguros + órdenes (HU-013). */
+    PaymentsModule,
   ],
   providers: [
     /**

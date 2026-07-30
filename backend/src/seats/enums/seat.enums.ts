@@ -48,4 +48,6 @@ export enum SeatLockAuditAction {
   LOCK = 'LOCK',
   RELEASE = 'RELEASE',
   EXPIRE = 'EXPIRE',
+  /** Confirmación de venta tras pago aprobado (HU-013 / RN-053). */
+  SELL = 'SELL',
 }

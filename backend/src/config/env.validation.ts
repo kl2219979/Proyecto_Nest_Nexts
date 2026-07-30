@@ -131,4 +131,21 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   JWT_SECRET: string = 'dev-jwt-secret-change-me';
+
+  /**
+   * Clave AES-256 (64 hex = 32 bytes) para cifrar payload de pasarela (HU-013).
+   * @default 64 hex de desarrollo (NO usar en producción)
+   */
+  @IsOptional()
+  @IsString()
+  PAYMENT_AES_KEY: string =
+    '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+
+  /**
+   * Secreto HMAC para validar webhooks de pago (HU-013 / RN-053).
+   * @default dev-payment-webhook-secret
+   */
+  @IsOptional()
+  @IsString()
+  PAYMENT_WEBHOOK_SECRET: string = 'dev-payment-webhook-secret';
 }

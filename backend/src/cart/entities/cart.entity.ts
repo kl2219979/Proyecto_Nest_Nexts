@@ -43,7 +43,7 @@ export class Cart {
   @JoinColumn({ name: 'userId' })
   user!: User;
 
-  /** ACTIVE | EXPIRED | CANCELLED. */
+  /** ACTIVE | CHECKOUT | COMPLETED | EXPIRED | CANCELLED. */
   @Column({ type: 'varchar', length: 20 })
   status!: CartStatus;
 

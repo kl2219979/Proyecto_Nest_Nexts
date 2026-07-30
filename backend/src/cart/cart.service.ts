@@ -422,7 +422,111 @@ export class CartService {
   }
 
   /**
-   * Expira carritos ACTIVE vencidos y libera sillas (RN-046).
+   * Prepara el carrito ACTIVE para iniciar pago (HU-013).
+   *
+   * Valida locks vigentes, revalida stock de snacks y renueva TTL.
+   *
+   * @param userId - Usuario del JWT.
+   * @returns Carrito entidad + vista con totales.
+   */
+  async prepareForPayment(
+    userId: string,
+  ): Promise<{ cart: Cart; view: CartResponse }> {
+    await this.expireOverdueCarts(userId);
+    const cart = await this.requireActiveCart(userId);
+    await this.assertLocksStillHeld(cart);
+
+    if (!cart.tickets?.length) {
+      throw new BadRequestException(
+        'El carrito no tiene entradas; no se puede pagar',
+      );
+    }
+
+    const cinemaId = await this.resolvePickupCinemaId(cart);
+    for (const line of cart.snacks ?? []) {
+      await this.snacksService.assertPurchasable(
+        line.snackId,
+        line.quantity,
+        cinemaId,
+      );
+    }
+
+    const view = await this.touchAndRespond(cart);
+    const refreshed = await this.requireActiveCart(userId);
+    return { cart: refreshed, view };
+  }
+
+  /**
+   * Marca el carrito en CHECKOUT mientras se espera el webhook (HU-013).
+   *
+   * @param cartId - UUID del carrito.
+   * @param userId - Dueño (seguridad).
+   * @param expiresAt - Nueva caducidad alineada al intento de pago.
+   */
+  async markCheckout(
+    cartId: string,
+    userId: string,
+    expiresAt: Date,
+  ): Promise<void> {
+    const cart = await this.cartRepo.findOne({
+      where: { id: cartId, userId, status: CartStatus.ACTIVE },
+    });
+    if (!cart) {
+      throw new ConflictException(
+        'El carrito ya no está ACTIVE; no se puede iniciar el pago',
+      );
+    }
+    cart.status = CartStatus.CHECKOUT;
+    cart.expiresAt = expiresAt;
+    cart.lastActivityAt = new Date();
+    await this.cartRepo.save(cart);
+    await this.seatsService.extendReservationExpiry(
+      userId,
+      cart.reservationId,
+      expiresAt,
+    );
+  }
+
+  /**
+   * Marca carrito COMPLETED tras pago aprobado (HU-013).
+   *
+   * @param cartId - UUID.
+   * @param userId - Dueño.
+   */
+  async markCompleted(cartId: string, userId: string): Promise<void> {
+    await this.cartRepo.update(
+      { id: cartId, userId },
+      { status: CartStatus.COMPLETED, lastActivityAt: new Date() },
+    );
+  }
+
+  /**
+   * Abandona checkout (pago rechazado / fallo): cancela y libera sillas (RN-054).
+   *
+   * @param cartId - UUID.
+   * @param userId - Dueño.
+   * @returns Cantidad de sillas liberadas.
+   */
+  async failCheckout(cartId: string, userId: string): Promise<number> {
+    const cart = await this.cartRepo.findOne({
+      where: { id: cartId, userId },
+      relations: { tickets: true, snacks: true },
+    });
+    if (!cart) {
+      return 0;
+    }
+    if (
+      cart.status === CartStatus.COMPLETED ||
+      cart.status === CartStatus.CANCELLED ||
+      cart.status === CartStatus.EXPIRED
+    ) {
+      return 0;
+    }
+    return this.cancelCartEntity(cart, true, CartStatus.CANCELLED);
+  }
+
+  /**
+   * Expira carritos ACTIVE/CHECKOUT vencidos y libera sillas (RN-046 / RN-054).
    *
    * @param userId - Opcional: limita al usuario (lazy por request).
    * @returns {Promise<number>} Carritos expirados.
@@ -432,7 +536,9 @@ export class CartService {
       .createQueryBuilder('cart')
       .leftJoinAndSelect('cart.tickets', 'tickets')
       .leftJoinAndSelect('cart.snacks', 'snacks')
-      .where('cart.status = :status', { status: CartStatus.ACTIVE })
+      .where('cart.status IN (:...statuses)', {
+        statuses: [CartStatus.ACTIVE, CartStatus.CHECKOUT],
+      })
       .andWhere('cart.expiresAt <= :now', { now: new Date() });
 
     if (userId) {

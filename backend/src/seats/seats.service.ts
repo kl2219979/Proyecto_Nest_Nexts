@@ -364,6 +364,102 @@ export class SeatsService {
   }
 
   /**
+   * Confirma que la reserva sigue LOCKED con las sillas esperadas (HU-013).
+   *
+   * @param userId - Dueño.
+   * @param reservationId - Grupo.
+   * @param expectedSeatIds - Sillas del carrito/orden.
+   * @throws {ConflictException} Si faltan locks o no coinciden.
+   */
+  async assertReservationHeld(
+    userId: string,
+    reservationId: string,
+    expectedSeatIds: string[],
+  ): Promise<void> {
+    await this.expireOverdueLocks();
+    const locks = await this.lockRepo.find({
+      where: {
+        userId,
+        reservationId,
+        status: SeatLockStatus.LOCKED,
+      },
+    });
+    const held = new Set(locks.map((l) => l.seatId));
+    const missing = expectedSeatIds.filter((id) => !held.has(id));
+    if (missing.length > 0 || locks.length !== expectedSeatIds.length) {
+      throw new ConflictException(
+        'Las sillas ya no están reservadas; no se puede iniciar el pago',
+      );
+    }
+  }
+
+  /**
+   * Convierte locks LOCKED → SOLD y actualiza `showtime.soldSeats` (HU-013).
+   *
+   * Solo tras autorización de pasarela (RN-053). Audita `SELL`.
+   *
+   * @param userId - Comprador.
+   * @param reservationId - Reserva del carrito.
+   * @param expectedSeatIds - Sillas a confirmar.
+   * @returns Cantidad marcada como vendida.
+   */
+  async confirmReservationSold(
+    userId: string,
+    reservationId: string,
+    expectedSeatIds: string[],
+  ): Promise<number> {
+    await this.expireOverdueLocks();
+
+    return this.dataSource.transaction(async (manager) => {
+      const lockRepo = manager.getRepository(SeatLock);
+      const auditRepo = manager.getRepository(SeatLockAudit);
+      const showtimeRepo = manager.getRepository(Showtime);
+
+      const locks = await lockRepo.find({
+        where: {
+          userId,
+          reservationId,
+          status: SeatLockStatus.LOCKED,
+          seatId: In(expectedSeatIds),
+        },
+      });
+
+      if (locks.length !== expectedSeatIds.length) {
+        throw new ConflictException(
+          'No se pudieron confirmar todas las sillas como vendidas (RN-043)',
+        );
+      }
+
+      const showtimeId = locks[0]!.showtimeId;
+      for (const lock of locks) {
+        lock.status = SeatLockStatus.SOLD;
+        lock.expiresAt = null;
+      }
+      await lockRepo.save(locks);
+
+      await showtimeRepo.increment(
+        { id: showtimeId },
+        'soldSeats',
+        locks.length,
+      );
+
+      await auditRepo.save(
+        locks.map((lock) =>
+          auditRepo.create({
+            showtimeId: lock.showtimeId,
+            seatId: lock.seatId,
+            userId,
+            reservationId: lock.reservationId,
+            action: SeatLockAuditAction.SELL,
+          }),
+        ),
+      );
+
+      return locks.length;
+    });
+  }
+
+  /**
    * Libera sillas concretas de una reserva (p. ej. al quitar ítems del carrito).
    *
    * @param userId - Dueño de los locks.

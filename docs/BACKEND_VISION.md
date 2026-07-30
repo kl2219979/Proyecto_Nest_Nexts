@@ -36,7 +36,8 @@
 | HU-010 Selección de sillas | **Hecho** | GET/POST /functions/:id/seats · reservations · RN-039…043 |
 | HU-011 Carrito de compras | **Hecho** | CRUD /cart · apply-membership/promo · RN-044…048 |
 | HU-012 Confitería | **Hecho** | GET /snacks · POST/PUT/DELETE /cart/snacks · RN-049…052 |
-| HU-013 … HU-029 | Pendiente | Ver sección 3 |
+| HU-013 Proceso de pago | **Hecho** | POST/GET /payments · webhook HMAC · órdenes · RN-053…056 |
+| HU-014 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -133,6 +134,15 @@
 - `POST/PUT/DELETE /cart/snacks` con validación de stock (RN-049) sin descontar inventario (RN-052).
 - RN-051 descuento membresía `SNACK_*` en totales; pickup = cine de la función (`cart.pickup`).
 - Guía `docs/features/hu-012-snacks.md`.
+
+#### HU-013 — Proceso de pago seguro
+- Módulo `backend/src/payments/`: entidades `Order`, `OrderTicketItem`, `OrderSnackItem`, `Payment`, `PaymentAudit`.
+- Endpoints JWT: `POST /payments`, `GET /payments`, `GET /payments/:id`; webhook `POST /payments/webhook` (HMAC).
+- Medios: CREDIT_CARD / DEBIT_CARD / PSE / NEQUI / DAVIPLATA; tokenización (sin PAN); payload AES-256-GCM.
+- RN-053 confirmación solo por webhook firmado; RN-054 libera sillas si REJECTED; RN-055 auditoría; RN-056 idempotencia.
+- Tras APPROVED: locks → SOLD, `soldSeats++`, stock snacks −, carrito COMPLETED; tickets/factura → HU-014.
+- `PaymentGatewayService` (Adapter); env `PAYMENT_AES_KEY` / `PAYMENT_WEBHOOK_SECRET`.
+- Guía `docs/features/hu-013-payments.md`.
 
 ---
 
@@ -312,6 +322,7 @@ Health OK
 - HU-010 guía: `docs/features/hu-010-seats.md`
 - HU-011 guía: `docs/features/hu-011-cart.md`
 - HU-012 guía: `docs/features/hu-012-snacks.md`
+- HU-013 guía: `docs/features/hu-013-payments.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -325,5 +336,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-013 Proceso de Pago Seguro.
+Siguiente: HU-014 Generación de Entradas Digitales y Factura Electrónica.
 ```

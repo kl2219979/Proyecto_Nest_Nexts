@@ -30,7 +30,7 @@ export type PurchasableSnack = {
  *
  * RN-049 no vender agotados · RN-050 promo stub en producto ·
  * RN-051 descuento membresía lo aplica el carrito ·
- * RN-052 stock no baja aquí (pago = HU-013).
+ * RN-052 stock baja en `decrementStock` tras pago APPROVED (HU-013).
  *
  * Separado de `CartService` por responsabilidad única (catálogo vs carrito).
  */
@@ -160,6 +160,42 @@ export class SnacksService {
     return this.snackRepo.findOne({
       where: { id: snackId, isActive: true },
     });
+  }
+
+  /**
+   * Descuenta inventario tras pago aprobado (HU-013 / RN-052).
+   *
+   * Revalida stock en el momento del cobro para evitar sobreventa.
+   *
+   * @param lines - Pares snackId + quantity.
+   * @returns Unidades totales descontadas.
+   */
+  async decrementStock(
+    lines: Array<{ snackId: string; quantity: number }>,
+  ): Promise<number> {
+    let total = 0;
+    for (const line of lines) {
+      if (line.quantity <= 0) {
+        continue;
+      }
+      const snack = await this.snackRepo.findOne({
+        where: { id: line.snackId },
+      });
+      if (!snack) {
+        throw new NotFoundException(
+          `Snack no encontrado al descontar stock: ${line.snackId}`,
+        );
+      }
+      if (snack.stock < line.quantity) {
+        throw new BadRequestException(
+          `Stock insuficiente al confirmar pago (RN-049): ${snack.name}`,
+        );
+      }
+      snack.stock -= line.quantity;
+      await this.snackRepo.save(snack);
+      total += line.quantity;
+    }
+    return total;
   }
 
   /**

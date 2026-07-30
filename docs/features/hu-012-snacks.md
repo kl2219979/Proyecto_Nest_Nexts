@@ -13,7 +13,7 @@ DELETE /cart/snacks          → quitar / reducir
 GET  /cart                   → totales con snacks + pickup del complejo
 ```
 
-Descuento de inventario real = **HU-013** (tras pago OK, RN-052).
+Descuento de inventario real = **HU-013** (`SnacksService.decrementStock` tras webhook APPROVED, RN-052).
 CRUD admin del menú = **HU-020**. Promos avanzadas = **HU-026**.
 
 ## Endpoints
