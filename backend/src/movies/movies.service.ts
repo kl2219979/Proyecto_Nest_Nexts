@@ -71,7 +71,9 @@ export class MoviesService {
    * @param query - `cityId` + filtros opcionales del backlog.
    * @returns {Promise<BillboardResponse>} Películas activas con sus funciones.
    */
-  async getWeeklyBillboard(query: BillboardQueryDto): Promise<BillboardResponse> {
+  async getWeeklyBillboard(
+    query: BillboardQueryDto,
+  ): Promise<BillboardResponse> {
     return this.buildBillboard(query, false);
   }
 
@@ -81,7 +83,9 @@ export class MoviesService {
    * @param query - Mismos filtros que la semanal; `date` se fuerza a hoy.
    * @returns {Promise<BillboardResponse>} Películas con funciones de hoy.
    */
-  async getTodayBillboard(query: BillboardQueryDto): Promise<BillboardResponse> {
+  async getTodayBillboard(
+    query: BillboardQueryDto,
+  ): Promise<BillboardResponse> {
     return this.buildBillboard(query, true);
   }
 
@@ -349,7 +353,9 @@ export class MoviesService {
       ({ dayStart, dayEnd } = this.resolveDayBounds(new Date()));
     } else if (query.date) {
       this.assertDateInWindow(query.date, from, to);
-      ({ dayStart, dayEnd } = this.resolveDayBounds(this.parseLocalDate(query.date)));
+      ({ dayStart, dayEnd } = this.resolveDayBounds(
+        this.parseLocalDate(query.date),
+      ));
     }
 
     const showtimes = await this.findShowtimes({

@@ -1,10 +1,7 @@
 /**
  * Tests unitarios de `NotificationsService` (HU-005).
  */
-import {
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { City } from '../locations/entities/city.entity';

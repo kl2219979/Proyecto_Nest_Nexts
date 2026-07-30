@@ -29,7 +29,8 @@
 | HU-003 Cartelera semanal | **Hecho** | GET /movies + /movies/today · filtros · RN-010/011/012 · seed demo |
 | HU-004 Detalle de película | **Hecho** | GET /movies/:id + recommendations · RN-014/015/016 · cast/precios |
 | HU-005 Próximos estrenos | **Hecho** | GET /movies/upcoming + POST /notifications/upcoming · RN-017…020 |
-| HU-006 … HU-029 | Pendiente | Ver sección 3 |
+| HU-006 Registro + membresía | **Hecho** | POST /auth/register + /activate · membresía/wallet · RN-021…026 |
+| HU-007 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -71,6 +72,14 @@
 - RN-019 unicidad user+movie; RN-020 `promoteToNowShowing` marca avisos `SENT` (email = HU-015).
 - Seed: Nocturna del Caribe / Risa Contagiosa con fechas distintas Medellín vs Bogotá.
 - Guía `docs/features/hu-005-upcoming.md`.
+
+#### HU-006 — Registro y membresía digital
+- Módulos `auth` + `membership`: entidades User, UserProfile, NotificationPreference, Membership, Wallet.
+- Endpoints: `POST /auth/register`, `POST /auth/activate`, `POST /membership/create`.
+- RN-021…026: email único, política de password, cuenta inactiva hasta activar, membresía + código `MC-*`, billetera en 0.
+- BCrypt (`bcryptjs`), CAPTCHA stub (`CAPTCHA_DEV_TOKEN`), rate-limit (`@nestjs/throttler`).
+- Correo de activación = log con enlace (motor real = HU-015).
+- Guía `docs/features/hu-006-auth-register.md`.
 
 ---
 
@@ -243,6 +252,7 @@ Health OK
 - HU-003 guía: `docs/features/hu-003-movies.md`
 - HU-004 guía: `docs/features/hu-004-movie-detail.md`
 - HU-005 guía: `docs/features/hu-005-upcoming.md`
+- HU-006 guía: `docs/features/hu-006-auth-register.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -256,5 +266,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-006 Registro de Usuario y Creación de Membresía Digital.
+Siguiente: HU-007 Inicio de Sesión y Autenticación Segura.
 ```

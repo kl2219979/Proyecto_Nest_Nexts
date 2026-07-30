@@ -46,6 +46,7 @@ alwaysApply: true
 - HU-003 cartelera semanal (GET /movies, GET /movies/today)
 - HU-004 detalle de película (GET /movies/:id, recommendations)
 - HU-005 próximos estrenos (GET /movies/upcoming, POST /notifications/upcoming)
+- HU-006 registro de usuario + membresía digital
 
 ## Siguiente
-- HU-006 registro de usuario + membresía digital
+- HU-007 inicio de sesión y autenticación segura (JWT)

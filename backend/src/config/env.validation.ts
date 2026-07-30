@@ -105,4 +105,20 @@ export class EnvironmentVariables {
   })
   @IsBoolean()
   DATABASE_SYNC: boolean = true;
+
+  /**
+   * URL pública base para enlaces de activación (correo HU-006).
+   * @default http://localhost:3000
+   */
+  @IsOptional()
+  @IsString()
+  APP_PUBLIC_URL: string = 'http://localhost:3000';
+
+  /**
+   * Token CAPTCHA aceptado en desarrollo (sin proveedor externo).
+   * @default dev-ok
+   */
+  @IsOptional()
+  @IsString()
+  CAPTCHA_DEV_TOKEN: string = 'dev-ok';
 }

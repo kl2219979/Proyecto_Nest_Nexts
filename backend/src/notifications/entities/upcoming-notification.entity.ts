@@ -28,8 +28,9 @@ export enum UpcomingNotificationStatus {
  * Unicidad `(userId, movieId)` → RN-019 (sin duplicados).
  *
  * @remarks
- * Sin JWT aún (HU-006/007): el cliente envía `userId` + `email`
- * provisionalmente. Cuando exista auth, se tomarán del token.
+ * Hasta HU-007 el cliente puede enviar `userId` + `email` en el body.
+ * Con HU-006 ya existe la tabla `users`; el aviso sigue aceptando
+ * esos campos hasta que el login JWT los tome del token.
  */
 @Entity('upcoming_notifications')
 @Unique('uq_upcoming_user_movie', ['userId', 'movieId'])

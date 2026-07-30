@@ -455,7 +455,9 @@ describe('MoviesService', () => {
       id: 'm-nocturna',
       status: MovieStatus.UPCOMING,
     });
-    movieRepo.save.mockImplementation(async (m: { status: MovieStatus }) => m);
+    movieRepo.save.mockImplementation((m: { status: MovieStatus }) =>
+      Promise.resolve(m),
+    );
     notificationsService.dispatchUpcomingForMovie.mockResolvedValue({
       movieId: 'm-nocturna',
       notifiedCount: 2,

@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
 import databaseConfig from './config/database.config';
 import { validateEnv } from './config/validate-env';
 import { HealthModule } from './health/health.module';
 import { LocationsModule } from './locations/locations.module';
+import { MembershipModule } from './membership/membership.module';
 import { MoviesModule } from './movies/movies.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
@@ -74,6 +78,17 @@ import { NotificationsModule } from './notifications/notifications.module';
       }),
     }),
 
+    /**
+     * Rate limiting global (HU-006: fuerza bruta en registro).
+     * Defaults suaves; `POST /auth/register` endurece con `@Throttle`.
+     */
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: 100,
+      },
+    ]),
+
     /** Health check (HU-001). */
     HealthModule,
     /** Catálogo geográfico País → Departamento → Ciudad (HU-002). */
@@ -82,6 +97,20 @@ import { NotificationsModule } from './notifications/notifications.module';
     NotificationsModule,
     /** Cartelera, detalle y próximos estrenos (HU-003 / HU-004 / HU-005). */
     MoviesModule,
+    /** Membresía digital + billetera (HU-006). */
+    MembershipModule,
+    /** Registro y activación de cuenta (HU-006). */
+    AuthModule,
+  ],
+  providers: [
+    /**
+     * Aplica el rate limit a todas las rutas HTTP.
+     * Endpoints críticos pueden bajar el techo con `@Throttle`.
+     */
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

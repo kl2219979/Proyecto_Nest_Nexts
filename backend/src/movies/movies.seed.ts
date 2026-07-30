@@ -7,7 +7,12 @@ import { Movie } from './entities/movie.entity';
 import { MovieCityRelease } from './entities/movie-city-release.entity';
 import { Room } from './entities/room.entity';
 import { Showtime } from './entities/showtime.entity';
-import { AudioType, MovieFormat, MovieStatus, RoomType } from './enums/movie.enums';
+import {
+  AudioType,
+  MovieFormat,
+  MovieStatus,
+  RoomType,
+} from './enums/movie.enums';
 
 /**
  * Inserta cartelera + fichas + próximos estrenos demo (HU-003 / HU-004 / HU-005).
@@ -171,14 +176,7 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
     genres: [comedia],
   });
 
-  await movieRepo.save([
-    odisea,
-    rio,
-    pixel,
-    inactiveBillboard,
-    nocturna,
-    risa,
-  ]);
+  await movieRepo.save([odisea, rio, pixel, inactiveBillboard, nocturna, risa]);
 
   await castRepo.save([
     castRepo.create({
