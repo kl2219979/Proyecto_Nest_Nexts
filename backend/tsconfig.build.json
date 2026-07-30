@@ -1,0 +1,20 @@
+{
+  // =============================================================================
+  // tsconfig.build.json — TypeScript SOLO para el build de producción
+  // =============================================================================
+  // ¿Qué es?
+  //   Variante de tsconfig.json usada por `nest build` / `tsc -p tsconfig.build.json`.
+  //
+  // ¿Por qué existe?
+  //   El tsconfig “general” sirve para el IDE y los tests.
+  //   El de build EXCLUYE tests y specs para no meterlos en `dist/`.
+  //
+  // Guía: docs/config/tsconfig.build.md
+  // =============================================================================
+
+  // Hereda TODAS las compilerOptions de tsconfig.json.
+  "extends": "./tsconfig.json",
+
+  // No compiles estas rutas al generar la API desplegable.
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}

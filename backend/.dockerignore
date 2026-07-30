@@ -1,0 +1,40 @@
+# =============================================================================
+# .dockerignore — qué NO enviar al construir la imagen Docker de la API
+# =============================================================================
+# ¿Qué es?
+#   Lista de archivos/carpetas excluidos del "contexto de build".
+#   Cuando ejecutas `docker build` / `docker compose build`, Docker empaqueta
+#   la carpeta `backend/` y se la pasa al daemon. Este archivo recorta ese paquete.
+#
+# ¿Por qué existe?
+#   1) Builds más rápidos (menos archivos a copiar).
+#   2) Imágenes más pequeñas.
+#   3) Seguridad: no meter `.env` con secretos dentro de la imagen.
+#   4) Evitar copiar `node_modules` del host (pueden ser de otro SO/CPU).
+#
+# Analogía: es el `.gitignore`, pero para Docker build (no para Git).
+#
+# Guía detallada: docs/config/dockerignore.md
+# =============================================================================
+
+# Dependencias: se reinstalan DENTRO de la imagen con `RUN npm install`
+node_modules
+
+# Artefactos de compilación y cobertura de tests
+dist
+coverage
+
+# Metadatos de Git (no aportan a la imagen de runtime)
+.git
+.gitignore
+
+# Documentación markdown del backend (no necesaria para ejecutar Nest)
+*.md
+
+# Secretos y variantes de entorno (la config llega por Compose / env_file)
+.env
+.env.*
+
+# Logs y basura del sistema
+*.log
+.DS_Store

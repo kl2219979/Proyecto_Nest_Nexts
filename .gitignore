@@ -1,0 +1,14 @@
+# Root
+.env
+.env.local
+.env.*.local
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+
+# Backend nested artifacts
+backend/node_modules/
+backend/dist/
+backend/coverage/

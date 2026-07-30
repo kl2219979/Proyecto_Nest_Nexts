@@ -1,0 +1,68 @@
+{
+  // =============================================================================
+  // tsconfig.json — cómo TypeScript COMPILA y VERIFICA el backend
+  // =============================================================================
+  // ¿Qué es?
+  //   Instrucciones para el compilador `tsc` / Nest CLI: qué JS generar y qué
+  //   errores de tipos reportar.
+  //
+  // ¿Por qué existe?
+  //   Sin este archivo, cada herramienta asumiría defaults distintos.
+  //   Nest + decoradores + TypeORM NECESITAN opciones específicas
+  //   (experimentalDecorators, emitDecoratorMetadata).
+  //
+  // Guía: docs/config/tsconfig.md
+  // =============================================================================
+  "compilerOptions": {
+    // Sistema de módulos moderno alineado con Node (package.json "type"/exports).
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+
+    // Permite `import express from 'express'` aunque el paquete exporte CommonJS.
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    // Cada archivo se trata como módulo aislado (mejor para bundlers/transpilers).
+    "isolatedModules": true,
+
+    // Genera archivos .d.ts (tipos) junto al JS compilado.
+    "declaration": true,
+
+    // Quita comentarios del JS de salida (los JSDoc NO van al runtime).
+    "removeComments": true,
+
+    // OBLIGATORIOS en Nest: decoradores (@Controller, @Injectable, @Entity…).
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    // Versión de JS de salida (Node 22 entiende ES2023 sin problema).
+    "target": "ES2023",
+
+    // Genera .js.map para depurar TypeScript desde el JS en runtime.
+    "sourceMap": true,
+
+    // Carpeta de salida del build (`npm run build` → ./dist).
+    "outDir": "./dist",
+
+    // Base para imports relativos del proyecto.
+    "baseUrl": "./",
+
+    // Recompila más rápido guardando información incremental.
+    "incremental": true,
+
+    // No type-checkea node_modules (acelera mucho el build).
+    "skipLibCheck": true,
+
+    // null/undefined se toman en serio (evita bugs clásicos).
+    "strictNullChecks": true,
+
+    // Obliga a respetar mayúsculas/minúsculas en rutas de import (Linux vs Windows).
+    "forceConsistentCasingInFileNames": true,
+
+    // Relajados a propósito en el scaffold de Nest; se pueden endurecer después.
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false
+  }
+}

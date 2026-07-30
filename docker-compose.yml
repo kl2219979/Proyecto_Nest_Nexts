@@ -1,0 +1,80 @@
+# =============================================================================
+# docker-compose.yml — orquesta API + PostgreSQL en contenedores separados
+# =============================================================================
+# ¿Qué es?
+#   Define "servicios" (contenedores) que trabajan juntos en una red Docker.
+#
+# ¿Por qué existe?
+#   HU-001 exige API y base de datos separadas, levantadas con un solo comando:
+#     docker compose up --build
+#
+# Guía detallada: docs/config/docker-compose.md
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Servicio `db`: solo PostgreSQL
+  # ---------------------------------------------------------------------------
+  db:
+    # Imagen oficial ligera de Postgres 16.
+    image: postgres:16-alpine
+    container_name: multicine-db
+    # Si el contenedor cae, Docker intenta reiniciarlo (salvo stop manual).
+    restart: unless-stopped
+    # Credenciales iniciales de Postgres (vienen del archivo `.env` de la raíz).
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    # host:contenedor → puedes conectar desde tu PC a localhost:5432
+    ports:
+      - '5432:5432'
+    # Volumen nombrado: los datos NO se borran al recrear el contenedor.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Compose espera a que Postgres acepte conexiones antes de arrancar la API.
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # Servicio `api`: solo NestJS
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      # Contexto = carpeta backend (ahí está el Dockerfile).
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: multicine-api
+    restart: unless-stopped
+    # Publica el puerto de Nest en tu máquina.
+    ports:
+      - '${PORT:-3000}:3000'
+    # Carga variables desde `.env` de la raíz del proyecto.
+    env_file:
+      - .env
+    # Estas variables pisan/definen la conexión vista DESDE el contenedor api.
+    # Ojo: DATABASE_HOST debe ser `db` (nombre del servicio), NO localhost.
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      # Monta tu código local → hot reload dentro del contenedor.
+      - ./backend:/app
+      # Conserva node_modules de la imagen (no los pisa el mount de ./backend).
+      - /app/node_modules
+    # No arranca la API hasta que el healthcheck de `db` esté OK.
+    depends_on:
+      db:
+        condition: service_healthy
+
+# Volúmenes declarados a nivel de proyecto (persistencia de Postgres).
+volumes:
+  postgres_data:
