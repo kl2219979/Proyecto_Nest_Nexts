@@ -15,7 +15,7 @@ POST /cart/apply-promo      → cupón demo (RN-048)
 DELETE /cart                → cancela + libera sillas
 ```
 
-Catálogo real de confitería y stock = **HU-012**.
+Catálogo real de confitería y stock = **HU-012** (`GET /snacks`, `POST|PUT|DELETE /cart/snacks`).
 Pasarela / orden = **HU-013**. Promos admin = **HU-026**. Giftcards = **HU-018**.
 
 ## Endpoints

@@ -10,6 +10,7 @@ import { benefitsForLevel } from '../membership/membership-benefits';
 import { MembershipService } from '../membership/membership.service';
 import { Showtime } from '../movies/entities/showtime.entity';
 import { SeatsService } from '../seats/seats.service';
+import { SnacksService } from '../snacks/snacks.service';
 import {
   CartResponse,
   CartSnackView,
@@ -18,11 +19,15 @@ import {
   DeleteCartResult,
 } from './dto/cart-response';
 import {
+  AddCartSnackDto,
+  RemoveCartSnackDto,
+  UpdateCartSnackDto,
+} from './dto/cart-snacks.dto';
+import {
   ApplyPromoDto,
   CreateCartDto,
   DEMO_PROMOS,
   UpdateCartDto,
-  UpsertCartSnackDto,
 } from './dto/cart.dto';
 import { CartSnackItem } from './entities/cart-snack-item.entity';
 import { CartTicketItem } from './entities/cart-ticket-item.entity';
@@ -59,10 +64,11 @@ export class CartService {
   /**
    * @param cartRepo - Persistencia del carrito.
    * @param ticketRepo - Líneas de entrada.
-   * @param snackRepo - Líneas de confitería.
+   * @param snackItemRepo - Líneas de confitería en el carrito.
    * @param showtimeRepo - Snapshot película/formato/sala.
    * @param seatsService - Reservas / TTL de sillas (HU-010).
-   * @param membershipService - Nivel y beneficios (RN-047).
+   * @param membershipService - Nivel y beneficios (RN-047 / RN-051).
+   * @param snacksService - Catálogo y stock (HU-012 / RN-049).
    */
   constructor(
     @InjectRepository(Cart)
@@ -70,11 +76,12 @@ export class CartService {
     @InjectRepository(CartTicketItem)
     private readonly ticketRepo: Repository<CartTicketItem>,
     @InjectRepository(CartSnackItem)
-    private readonly snackRepo: Repository<CartSnackItem>,
+    private readonly snackItemRepo: Repository<CartSnackItem>,
     @InjectRepository(Showtime)
     private readonly showtimeRepo: Repository<Showtime>,
     private readonly seatsService: SeatsService,
     private readonly membershipService: MembershipService,
+    private readonly snacksService: SnacksService,
   ) {}
 
   /**
@@ -184,7 +191,7 @@ export class CartService {
   }
 
   /**
-   * `PUT /cart`: quitar sillas y/o reemplazar confitería.
+   * `PUT /cart`: quitar sillas (confitería → `POST|PUT|DELETE /cart/snacks`).
    *
    * @param userId - Usuario del JWT.
    * @param dto - Cambios a aplicar.
@@ -195,37 +202,150 @@ export class CartService {
     const cart = await this.requireActiveCart(userId);
     await this.assertLocksStillHeld(cart);
 
-    if (!dto.removeSeatIds?.length && dto.snacks === undefined) {
+    if (!dto.removeSeatIds?.length) {
       throw new BadRequestException(
-        'Indica removeSeatIds y/o snacks para modificar el carrito',
+        'Indica removeSeatIds. Para confitería usa POST/PUT/DELETE /cart/snacks (HU-012).',
       );
     }
 
-    if (dto.removeSeatIds && dto.removeSeatIds.length > 0) {
-      const removeSet = new Set(dto.removeSeatIds);
-      const toRemove = cart.tickets.filter((t) => removeSet.has(t.seatId));
-      if (toRemove.length !== dto.removeSeatIds.length) {
-        throw new BadRequestException(
-          'Una o más sillas no pertenecen al carrito activo',
-        );
-      }
-      if (toRemove.length >= cart.tickets.length) {
-        throw new BadRequestException(
-          'No puedes quitar todas las entradas: elimina el carrito con DELETE /cart',
-        );
-      }
-
-      await this.seatsService.releaseSeatsByIds(
-        userId,
-        cart.reservationId,
-        dto.removeSeatIds,
+    const removeSet = new Set(dto.removeSeatIds);
+    const toRemove = cart.tickets.filter((t) => removeSet.has(t.seatId));
+    if (toRemove.length !== dto.removeSeatIds.length) {
+      throw new BadRequestException(
+        'Una o más sillas no pertenecen al carrito activo',
       );
-      await this.ticketRepo.remove(toRemove);
-      cart.tickets = cart.tickets.filter((t) => !removeSet.has(t.seatId));
+    }
+    if (toRemove.length >= cart.tickets.length) {
+      throw new BadRequestException(
+        'No puedes quitar todas las entradas: elimina el carrito con DELETE /cart',
+      );
     }
 
-    if (dto.snacks !== undefined) {
-      await this.replaceSnacks(cart, dto.snacks);
+    await this.seatsService.releaseSeatsByIds(
+      userId,
+      cart.reservationId,
+      dto.removeSeatIds,
+    );
+    await this.ticketRepo.remove(toRemove);
+    cart.tickets = cart.tickets.filter((t) => !removeSet.has(t.seatId));
+
+    return this.touchAndRespond(cart);
+  }
+
+  /**
+   * `POST /cart/snacks`: agrega (o suma) un producto del catálogo (HU-012).
+   *
+   * Valida stock sin descontarlo (RN-049 / RN-052).
+   * Aplica precio de catálogo (+ promo producto); membresía en totales (RN-051).
+   *
+   * @param userId - Usuario del JWT.
+   * @param dto - snackId + quantity.
+   * @returns {Promise<CartResponse>} Carrito actualizado.
+   */
+  async addSnack(
+    userId: string,
+    dto: AddCartSnackDto,
+  ): Promise<CartResponse> {
+    await this.expireOverdueCarts(userId);
+    const cart = await this.requireActiveCart(userId);
+    await this.assertLocksStillHeld(cart);
+
+    const cinemaId = await this.resolvePickupCinemaId(cart);
+    const existing = (cart.snacks ?? []).find((s) => s.snackId === dto.snackId);
+    const newQty = (existing?.quantity ?? 0) + dto.quantity;
+
+    const { snack, unitPrice } = await this.snacksService.assertPurchasable(
+      dto.snackId,
+      newQty,
+      cinemaId,
+    );
+
+    if (existing) {
+      existing.quantity = newQty;
+      existing.unitPrice = unitPrice;
+      existing.name = snack.name;
+      existing.imageUrl = snack.imageUrl;
+    } else {
+      const line = this.snackItemRepo.create({
+        cartId: cart.id,
+        snackId: snack.id,
+        name: snack.name,
+        imageUrl: snack.imageUrl,
+        quantity: dto.quantity,
+        unitPrice,
+      });
+      cart.snacks = [...(cart.snacks ?? []), line];
+    }
+
+    return this.touchAndRespond(cart);
+  }
+
+  /**
+   * `PUT /cart/snacks`: fija la cantidad de un snack ya en el carrito.
+   *
+   * @param userId - Usuario del JWT.
+   * @param dto - snackId + quantity total.
+   * @returns {Promise<CartResponse>} Carrito actualizado.
+   */
+  async updateSnack(
+    userId: string,
+    dto: UpdateCartSnackDto,
+  ): Promise<CartResponse> {
+    await this.expireOverdueCarts(userId);
+    const cart = await this.requireActiveCart(userId);
+    await this.assertLocksStillHeld(cart);
+
+    const existing = (cart.snacks ?? []).find((s) => s.snackId === dto.snackId);
+    if (!existing) {
+      throw new NotFoundException(
+        `El snack no está en el carrito: ${dto.snackId}. Usa POST /cart/snacks para agregarlo.`,
+      );
+    }
+
+    const cinemaId = await this.resolvePickupCinemaId(cart);
+    const { snack, unitPrice } = await this.snacksService.assertPurchasable(
+      dto.snackId,
+      dto.quantity,
+      cinemaId,
+    );
+
+    existing.quantity = dto.quantity;
+    existing.unitPrice = unitPrice;
+    existing.name = snack.name;
+    existing.imageUrl = snack.imageUrl;
+
+    return this.touchAndRespond(cart);
+  }
+
+  /**
+   * `DELETE /cart/snacks`: quita o reduce confitería del carrito.
+   *
+   * @param userId - Usuario del JWT.
+   * @param dto - snackId + quantity opcional a restar.
+   * @returns {Promise<CartResponse>} Carrito actualizado.
+   */
+  async removeSnack(
+    userId: string,
+    dto: RemoveCartSnackDto,
+  ): Promise<CartResponse> {
+    await this.expireOverdueCarts(userId);
+    const cart = await this.requireActiveCart(userId);
+    await this.assertLocksStillHeld(cart);
+
+    const existing = (cart.snacks ?? []).find((s) => s.snackId === dto.snackId);
+    if (!existing) {
+      throw new NotFoundException(
+        `El snack no está en el carrito: ${dto.snackId}`,
+      );
+    }
+
+    if (dto.quantity === undefined || dto.quantity >= existing.quantity) {
+      await this.snackItemRepo.remove(existing);
+      cart.snacks = (cart.snacks ?? []).filter(
+        (s) => s.snackId !== dto.snackId,
+      );
+    } else {
+      existing.quantity -= dto.quantity;
     }
 
     return this.touchAndRespond(cart);
@@ -398,35 +518,15 @@ export class CartService {
     }
   }
 
-  private async replaceSnacks(
-    cart: Cart,
-    snacks: UpsertCartSnackDto[],
-  ): Promise<void> {
-    for (const snack of snacks) {
-      if (snack.quantity < 1) {
-        throw new BadRequestException(
-          'No se permiten cantidades negativas o cero',
-        );
-      }
-      if (snack.unitPrice < 0) {
-        throw new BadRequestException('unitPrice no puede ser negativo');
-      }
-    }
-
-    if (cart.snacks?.length) {
-      await this.snackRepo.remove(cart.snacks);
-    }
-
-    cart.snacks = snacks.map((s) =>
-      this.snackRepo.create({
-        cartId: cart.id,
-        snackId: s.snackId,
-        name: s.name,
-        imageUrl: s.imageUrl ?? null,
-        quantity: s.quantity,
-        unitPrice: s.unitPrice,
-      }),
-    );
+  /**
+   * Cine de pickup = complejo de la función del carrito.
+   */
+  private async resolvePickupCinemaId(cart: Cart): Promise<string | null> {
+    const showtime = await this.showtimeRepo.findOne({
+      where: { id: cart.showtimeId },
+      relations: { room: { cinema: true } },
+    });
+    return showtime?.room?.cinema?.id ?? null;
   }
 
   /**
@@ -453,6 +553,15 @@ export class CartService {
     const snackPct = cart.membershipDiscountApplied
       ? this.discountPercent(benefits, 'SNACK')
       : 0;
+
+    const showtime = await this.showtimeRepo.findOne({
+      where: { id: cart.showtimeId },
+      relations: { room: { cinema: true } },
+    });
+    const pickup = {
+      cinemaId: showtime?.room?.cinema?.id ?? null,
+      cinemaName: showtime?.room?.cinema?.name ?? null,
+    };
 
     const ticketViews: CartTicketView[] = (cart.tickets ?? []).map((t) => {
       const unit = Number(t.unitPrice);
@@ -530,6 +639,7 @@ export class CartService {
       status: cart.status,
       reservationId: cart.reservationId,
       showtimeId: cart.showtimeId,
+      pickup,
       expiresAt: cart.expiresAt.toISOString(),
       lastActivityAt: cart.lastActivityAt.toISOString(),
       membershipDiscountApplied: cart.membershipDiscountApplied,

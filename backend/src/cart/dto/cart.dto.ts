@@ -1,16 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   ArrayUnique,
   IsArray,
-  IsInt,
-  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
-  Min,
-  ValidateNested,
 } from 'class-validator';
 
 /**
@@ -31,42 +26,9 @@ export class CreateCartDto {
 }
 
 /**
- * Snack provisional en `PUT /cart` (estructura hasta catálogo HU-012).
+ * Body de `PUT /cart` — quitar sillas (HU-011).
  *
- * No valida inventario aquí; HU-012 endurecerá stock y categorías.
- */
-export class UpsertCartSnackDto {
-  @ApiProperty({ format: 'uuid' })
-  @IsUUID('4')
-  snackId!: string;
-
-  @ApiProperty({ example: 'Crispetas grandes' })
-  @IsString()
-  @MaxLength(150)
-  name!: string;
-
-  @ApiPropertyOptional({ example: 'https://cdn.example/snacks/popcorn.png' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  imageUrl?: string;
-
-  @ApiProperty({ example: 1, minimum: 1 })
-  @IsInt({ message: 'quantity debe ser entero' })
-  @Min(1, { message: 'No se permiten cantidades menores a 1' })
-  quantity!: number;
-
-  @ApiProperty({ example: 12000 })
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0, { message: 'unitPrice no puede ser negativo' })
-  unitPrice!: number;
-}
-
-/**
- * Body de `PUT /cart` — modificar compra antes del pago.
- *
- * - `removeSeatIds`: quita entradas y libera esos locks.
- * - `snacks`: reemplaza líneas de confitería (catálogo real = HU-012).
+ * Confitería: `POST|PUT|DELETE /cart/snacks` (HU-012).
  */
 export class UpdateCartDto {
   @ApiPropertyOptional({
@@ -79,17 +41,6 @@ export class UpdateCartDto {
   @ArrayUnique()
   @IsUUID('4', { each: true })
   removeSeatIds?: string[];
-
-  @ApiPropertyOptional({
-    type: [UpsertCartSnackDto],
-    description:
-      'Reemplazo completo de confitería. Vacío = dejar snacks actuales. `null` no aplica; omitir = no tocar.',
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UpsertCartSnackDto)
-  snacks?: UpsertCartSnackDto[];
 }
 
 /**

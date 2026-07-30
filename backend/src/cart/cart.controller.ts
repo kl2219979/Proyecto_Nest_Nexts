@@ -24,10 +24,15 @@ import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 import type { AuthUser } from '../auth/jwt/jwt.strategy';
 import { CartService } from './cart.service';
 import { CartResponse, DeleteCartResult } from './dto/cart-response';
+import {
+  AddCartSnackDto,
+  RemoveCartSnackDto,
+  UpdateCartSnackDto,
+} from './dto/cart-snacks.dto';
 import { ApplyPromoDto, CreateCartDto, UpdateCartDto } from './dto/cart.dto';
 
 /**
- * Carrito de compras (HU-011).
+ * Carrito de compras (HU-011 + confitería HU-012).
  *
  * Prefijo global `/api/v1`:
  * - `POST   /cart`
@@ -36,6 +41,9 @@ import { ApplyPromoDto, CreateCartDto, UpdateCartDto } from './dto/cart.dto';
  * - `DELETE /cart`
  * - `POST   /cart/apply-membership`
  * - `POST   /cart/apply-promo`
+ * - `POST   /cart/snacks`
+ * - `PUT    /cart/snacks`
+ * - `DELETE /cart/snacks`
  */
 @ApiTags('Cart')
 @ApiBearerAuth()
@@ -89,17 +97,17 @@ export class CartController {
   }
 
   /**
-   * Modifica entradas (quitar sillas) y/o confitería.
+   * Quita sillas del carrito.
    *
    * @param user - Usuario del Access JWT.
-   * @param dto - Cambios.
+   * @param dto - `removeSeatIds`.
    * @returns {Promise<CartResponse>} Carrito actualizado.
    */
   @Put()
   @ApiOperation({
-    summary: 'Actualizar carrito',
+    summary: 'Actualizar carrito (sillas)',
     description:
-      'removeSeatIds libera locks. snacks reemplaza confitería (stock = HU-012).',
+      'removeSeatIds libera locks. Confitería: POST/PUT/DELETE /cart/snacks.',
   })
   @ApiOkResponse({ description: 'Carrito actualizado' })
   @ApiBadRequestResponse({ description: 'Payload inválido' })
@@ -110,6 +118,76 @@ export class CartController {
     @Body() dto: UpdateCartDto,
   ): Promise<CartResponse> {
     return this.cartService.update(user.userId, dto);
+  }
+
+  /**
+   * Agrega confitería del catálogo al carrito (HU-012).
+   *
+   * @param user - Usuario del Access JWT.
+   * @param dto - snackId + quantity.
+   * @returns {Promise<CartResponse>} Totales actualizados.
+   */
+  @Post('snacks')
+  @ApiOperation({
+    summary: 'Agregar confitería al carrito',
+    description:
+      'RN-049 valida stock sin descontarlo (RN-052). RN-051 membresía en snacks.',
+  })
+  @ApiCreatedResponse({ description: 'Snack agregado' })
+  @ApiBadRequestResponse({ description: 'Agotado o cantidad inválida' })
+  @ApiNotFoundResponse({ description: 'Producto o carrito inexistente' })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  addSnack(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: AddCartSnackDto,
+  ): Promise<CartResponse> {
+    return this.cartService.addSnack(user.userId, dto);
+  }
+
+  /**
+   * Actualiza la cantidad de un snack en el carrito (HU-012).
+   *
+   * @param user - Usuario del Access JWT.
+   * @param dto - snackId + quantity.
+   * @returns {Promise<CartResponse>} Totales actualizados.
+   */
+  @Put('snacks')
+  @ApiOperation({
+    summary: 'Actualizar cantidad de confitería',
+    description: 'Fija quantity total; RN-049 valida stock disponible.',
+  })
+  @ApiOkResponse({ description: 'Cantidad actualizada' })
+  @ApiBadRequestResponse({ description: 'Stock insuficiente' })
+  @ApiNotFoundResponse({ description: 'Línea o carrito inexistente' })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  updateSnack(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: UpdateCartSnackDto,
+  ): Promise<CartResponse> {
+    return this.cartService.updateSnack(user.userId, dto);
+  }
+
+  /**
+   * Quita o reduce confitería del carrito (HU-012).
+   *
+   * @param user - Usuario del Access JWT.
+   * @param dto - snackId + quantity opcional.
+   * @returns {Promise<CartResponse>} Totales actualizados.
+   */
+  @Delete('snacks')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Quitar confitería del carrito',
+    description: 'Sin quantity elimina la línea; con quantity resta unidades.',
+  })
+  @ApiOkResponse({ description: 'Snack removido o reducido' })
+  @ApiNotFoundResponse({ description: 'Línea o carrito inexistente' })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  removeSnack(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: RemoveCartSnackDto,
+  ): Promise<CartResponse> {
+    return this.cartService.removeSnack(user.userId, dto);
   }
 
   /**
@@ -132,7 +210,7 @@ export class CartController {
   }
 
   /**
-   * Aplica / reafirma el descuento de membresía (RN-047).
+   * Aplica / reafirma el descuento de membresía (RN-047 / RN-051).
    *
    * @param user - Usuario del Access JWT.
    * @returns {Promise<CartResponse>} Totales recalculados.
@@ -141,7 +219,7 @@ export class CartController {
   @HttpCode(200)
   @ApiOperation({
     summary: 'Aplicar descuento de membresía',
-    description: 'RN-047: % según nivel (benefitsForLevel).',
+    description: 'RN-047/051: % según nivel (benefitsForLevel) en entradas y snacks.',
   })
   @ApiOkResponse({ description: 'Descuento aplicado' })
   @ApiNotFoundResponse({ description: 'Sin carrito activo' })

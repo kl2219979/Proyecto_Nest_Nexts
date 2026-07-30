@@ -35,7 +35,8 @@
 | HU-009 Funciones / formato | **Hecho** | GET /movies/:id/functions · GET /functions/:id/prices · RN-035…038 |
 | HU-010 Selección de sillas | **Hecho** | GET/POST /functions/:id/seats · reservations · RN-039…043 |
 | HU-011 Carrito de compras | **Hecho** | CRUD /cart · apply-membership/promo · RN-044…048 |
-| HU-012 … HU-029 | Pendiente | Ver sección 3 |
+| HU-012 Confitería | **Hecho** | GET /snacks · POST/PUT/DELETE /cart/snacks · RN-049…052 |
+| HU-013 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -125,6 +126,13 @@
 - RN-047 descuento membresía automático (`benefitsForLevel`); RN-048 promos demo no apilables.
 - Snacks en carrito vía `PUT` (estructura); catálogo/stock → HU-012; giftcard saldo → HU-018.
 - Guía `docs/features/hu-011-cart.md`.
+
+#### HU-012 — Compra de productos de confitería
+- Módulo `backend/src/snacks/`: entidad `Snack` (categoría, precio, stock, promo stub, cinemaId opcional).
+- `GET /snacks` catálogo agrupado; filtros `cinemaId` / `category`; seed con producto agotado demo.
+- `POST/PUT/DELETE /cart/snacks` con validación de stock (RN-049) sin descontar inventario (RN-052).
+- RN-051 descuento membresía `SNACK_*` en totales; pickup = cine de la función (`cart.pickup`).
+- Guía `docs/features/hu-012-snacks.md`.
 
 ---
 
@@ -303,6 +311,7 @@ Health OK
 - HU-009 guía: `docs/features/hu-009-functions.md`
 - HU-010 guía: `docs/features/hu-010-seats.md`
 - HU-011 guía: `docs/features/hu-011-cart.md`
+- HU-012 guía: `docs/features/hu-012-snacks.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -316,5 +325,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-012 Compra de Productos de Confitería.
+Siguiente: HU-013 Proceso de Pago Seguro.
 ```

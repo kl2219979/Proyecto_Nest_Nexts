@@ -55,6 +55,11 @@ export type CartResponse = {
   status: string;
   reservationId: string;
   showtimeId: string;
+  /** Complejo donde se recogen snacks (cine de la función). */
+  pickup: {
+    cinemaId: string | null;
+    cinemaName: string | null;
+  };
   expiresAt: string;
   lastActivityAt: string;
   membershipDiscountApplied: boolean;

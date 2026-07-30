@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { MembershipModule } from '../membership/membership.module';
 import { Showtime } from '../movies/entities/showtime.entity';
 import { SeatsModule } from '../seats/seats.module';
+import { SnacksModule } from '../snacks/snacks.module';
 import { CartController } from './cart.controller';
 import { CartService } from './cart.service';
 import { CartSnackItem } from './entities/cart-snack-item.entity';
@@ -11,18 +12,19 @@ import { CartTicketItem } from './entities/cart-ticket-item.entity';
 import { Cart } from './entities/cart.entity';
 
 /**
- * Módulo del carrito de compras (HU-011).
+ * Módulo del carrito de compras (HU-011 + snacks HU-012).
  *
  * Endpoints JWT bajo `/api/v1/cart`:
- * CRUD + apply-membership + apply-promo.
+ * CRUD + apply-* + POST/PUT/DELETE snacks.
  *
- * Depende de `SeatsModule` (locks) y `MembershipModule` (RN-047).
+ * Depende de `SeatsModule`, `MembershipModule` y `SnacksModule`.
  */
 @Module({
   imports: [
     AuthModule,
     SeatsModule,
     MembershipModule,
+    SnacksModule,
     TypeOrmModule.forFeature([
       Cart,
       CartTicketItem,

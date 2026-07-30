@@ -8,10 +8,10 @@ import {
 import { Cart } from './cart.entity';
 
 /**
- * Línea de confitería en el carrito (HU-011 estructura / HU-012 catálogo).
+ * Línea de confitería en el carrito (HU-011 / HU-012).
  *
- * En esta HU el carrito puede guardar snacks provisionales vía PUT;
- * validación de stock y catálogo real llegan en HU-012.
+ * Snapshot de nombre/precio al agregar desde el catálogo (`SnacksService`).
+ * El stock del catálogo no se descuenta aquí (RN-052 → pago HU-013).
  */
 @Entity('cart_snack_items')
 export class CartSnackItem {
@@ -27,8 +27,7 @@ export class CartSnackItem {
   cart!: Cart;
 
   /**
-   * Id de producto de confitería.
-   * Hasta HU-012 puede ser un UUID inventado por el cliente de prueba.
+   * Id del producto en `snacks` (catálogo HU-012).
    */
   @Column({ type: 'uuid' })
   snackId!: string;

@@ -52,6 +52,7 @@ alwaysApply: true
 - HU-009 funciones por película + precios (GET /movies/:id/functions, GET /functions/:id/prices)
 - HU-010 selección interactiva de sillas (mapa, locks 10 min, release, anti doble-venta)
 - HU-011 administración del carrito (CRUD, membresía, promo demo, TTL 10 min)
+- HU-012 confitería (GET /snacks, POST/PUT/DELETE /cart/snacks, stock RN-049/052)
 
 ## Siguiente
-- HU-012 compra de productos de confitería
+- HU-013 proceso de pago seguro

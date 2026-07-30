@@ -14,6 +14,7 @@ import { MoviesModule } from './movies/movies.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProfileModule } from './profile/profile.module';
 import { SeatsModule } from './seats/seats.module';
+import { SnacksModule } from './snacks/snacks.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -108,7 +109,9 @@ import { SeatsModule } from './seats/seats.module';
     ProfileModule,
     /** Mapa de sillas + locks temporales (HU-010). */
     SeatsModule,
-    /** Carrito de compras entradas + snacks (HU-011). */
+    /** Catálogo de confitería (HU-012). */
+    SnacksModule,
+    /** Carrito de compras entradas + snacks (HU-011 / HU-012). */
     CartModule,
   ],
   providers: [

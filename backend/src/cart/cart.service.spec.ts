@@ -16,6 +16,7 @@ import {
   MovieFormat,
 } from '../movies/enums/movie.enums';
 import { SeatsService } from '../seats/seats.service';
+import { SnacksService } from '../snacks/snacks.service';
 import { CartService, CART_TAX_RATE } from './cart.service';
 import { CartSnackItem } from './entities/cart-snack-item.entity';
 import { CartTicketItem } from './entities/cart-ticket-item.entity';
@@ -40,7 +41,7 @@ describe('CartService', () => {
     create: jest.fn((x: unknown) => x),
     remove: jest.fn(),
   };
-  const snackRepo = {
+  const snackItemRepo = {
     create: jest.fn((x: unknown) => x),
     remove: jest.fn(),
   };
@@ -58,6 +59,9 @@ describe('CartService', () => {
   };
   const membershipService = {
     findByUserId: jest.fn(),
+  };
+  const snacksService = {
+    assertPurchasable: jest.fn(),
   };
 
   const futureStarts = new Date(Date.now() + 3 * 60 * 60 * 1000);
@@ -102,7 +106,7 @@ describe('CartService', () => {
     movie: { title: 'Demo Film' },
     room: {
       name: 'Sala 1',
-      cinema: { name: 'Laureles' },
+      cinema: { id: 'cine-1', name: 'Laureles' },
     },
   };
 
@@ -133,10 +137,11 @@ describe('CartService', () => {
         CartService,
         { provide: getRepositoryToken(Cart), useValue: cartRepo },
         { provide: getRepositoryToken(CartTicketItem), useValue: ticketRepo },
-        { provide: getRepositoryToken(CartSnackItem), useValue: snackRepo },
+        { provide: getRepositoryToken(CartSnackItem), useValue: snackItemRepo },
         { provide: getRepositoryToken(Showtime), useValue: showtimeRepo },
         { provide: SeatsService, useValue: seatsService },
         { provide: MembershipService, useValue: membershipService },
+        { provide: SnacksService, useValue: snacksService },
       ],
     }).compile();
 
@@ -263,5 +268,97 @@ describe('CartService', () => {
     expect(result.status).toBe(CartStatus.CANCELLED);
     expect(result.seatsReleased).toBe(2);
     expect(seatsService.releaseSeats).toHaveBeenCalledWith('user-1', 'res-1');
+  });
+
+  it('addSnack validates catalog and updates totals (HU-012)', async () => {
+    const cart = {
+      id: 'cart-1',
+      userId: 'user-1',
+      status: CartStatus.ACTIVE,
+      reservationId: 'res-1',
+      showtimeId: 'fn-1',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      lastActivityAt: new Date(),
+      membershipDiscountApplied: true,
+      promoCode: null,
+      promoDiscountAmount: 0,
+      promoStackable: null,
+      giftcardCode: null,
+      giftcardAmount: 0,
+      tickets: [
+        {
+          id: 't1',
+          seatId: 'seat-a',
+          seatLabel: 'A1',
+          movieId: 'movie-1',
+          movieTitle: 'Demo Film',
+          startsAt: futureStarts,
+          roomName: 'Sala 1',
+          cinemaName: 'Laureles',
+          format: '2D',
+          language: 'ES',
+          unitPrice: 20000,
+        },
+      ],
+      snacks: [],
+      createdAt: new Date(),
+    } as unknown as Cart;
+
+    cartRepo.findOne.mockResolvedValue(cart);
+    snacksService.assertPurchasable.mockResolvedValue({
+      snack: {
+        id: 'snack-1',
+        name: 'Crispetas grandes',
+        imageUrl: 'https://cdn/popcorn.png',
+        price: 18000,
+        stock: 80,
+      },
+      unitPrice: 18000,
+    });
+
+    const result = await service.addSnack('user-1', {
+      snackId: 'snack-1',
+      quantity: 2,
+    });
+
+    expect(snacksService.assertPurchasable).toHaveBeenCalledWith(
+      'snack-1',
+      2,
+      'cine-1',
+    );
+    expect(result.snacks).toHaveLength(1);
+    expect(result.snacks[0]!.quantity).toBe(2);
+    expect(result.summary.snacksSubtotal).toBe(36000);
+    expect(result.pickup.cinemaName).toBe('Laureles');
+  });
+
+  it('addSnack rejects sold-out via SnacksService (RN-049)', async () => {
+    const cart = {
+      id: 'cart-1',
+      userId: 'user-1',
+      status: CartStatus.ACTIVE,
+      reservationId: 'res-1',
+      showtimeId: 'fn-1',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      lastActivityAt: new Date(),
+      membershipDiscountApplied: true,
+      promoCode: null,
+      promoDiscountAmount: 0,
+      promoStackable: null,
+      giftcardCode: null,
+      giftcardAmount: 0,
+      tickets: [],
+      snacks: [],
+      createdAt: new Date(),
+    } as unknown as Cart;
+
+    cartRepo.findOne.mockResolvedValue(cart);
+    snacksService.assertPurchasable.mockRejectedValue(
+      new BadRequestException('Producto agotado (RN-049): Combo demo'),
+    );
+
+    await expect(
+      service.addSnack('user-1', { snackId: 'snack-out', quantity: 1 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });
