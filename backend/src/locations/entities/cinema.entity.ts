@@ -10,8 +10,8 @@ import { City } from './city.entity';
 /**
  * Complejo de cine (multiplex) asociado a una ciudad.
  *
- * En HU-002 aún no hay cartelera; el cine existe para cumplir RN-006
- * (“la ciudad debe tener al menos un cine activo”).
+ * Cumple RN-006 (ciudad con ≥1 cine activo) y ancla salas/funciones
+ * de la cartelera (HU-003) vía `Room.cinemaId`.
  */
 @Entity('cinemas')
 export class Cinema {

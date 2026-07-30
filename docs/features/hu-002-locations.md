@@ -38,7 +38,7 @@ El seed incluye **Guatapé** (sin cines) y **Yumbo** (inactiva) para que puedas 
 |---|---|
 | Catalogar geografía + cines | Guardar en Local Storage (eso es frontend) |
 | Validar `cityId` en POST | Autenticar usuario (HU-006/007) |
-| Sembrar Colombia al primer arranque | Cartelera semanal (HU-003) |
+| Sembrar Colombia al primer arranque | Próximos estrenos (HU-005) |
 
 `POST /users/location` **no** crea un usuario. Devuelve un JSON listo para que el frontend lo guarde en Local Storage (RN-008).
 

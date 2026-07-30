@@ -26,8 +26,10 @@
 |---|---|---|
 | HU-001 Infraestructura | **Hecho** | Nest + Docker Compose + Postgres + health + Swagger + Jest |
 | HU-002 Ubicación geográfica | **Hecho** | countries/departments/cities + POST users/location + seed CO + RN-006 |
-| HU-003 Cartelera semanal | Pendiente | **Siguiente** |
-| HU-004 … HU-029 | Pendiente | Ver sección 3 |
+| HU-003 Cartelera semanal | **Hecho** | GET /movies + /movies/today · filtros · RN-010/011/012 · seed demo |
+| HU-004 Detalle de película | **Hecho** | GET /movies/:id + recommendations · RN-014/015/016 · cast/precios |
+| HU-005 Próximos estrenos | Pendiente | **Siguiente** |
+| HU-006 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -45,6 +47,22 @@
 - Seed Colombia (incluye Guatapé sin cines y Yumbo inactiva para pruebas).
 - `ValidationPipe` global; guía `docs/features/hu-002-locations.md`.
 - Local Storage = frontend (fuera de alcance backend).
+
+#### HU-003 — Cartelera semanal
+- Módulo `backend/src/movies/` (entities Movie, Genre, Room, Showtime).
+- Endpoints: `GET /movies`, `GET /movies/today` (query `cityId` + filtros).
+- RN-010 funciones activas; RN-011 `available=true` oculta agotadas; RN-012 ventana 7 días.
+- Seed demo (Medellín/Bogotá) con función agotada y una inactiva.
+- Guía `docs/features/hu-003-movies.md`.
+- Detalle/trailer/precios → HU-004 (fuera de alcance).
+
+#### HU-004 — Detalle de película
+- Extensión de `Movie` (banner, trailerUrl, synopsis, releaseDate) + entidad `CastMember`.
+- `Showtime.price` y agregado `pricesByFormat` en el detalle.
+- Endpoints: `GET /movies/:id`, `GET /movies/:id/recommendations` (query `cityId`).
+- RN-014 solo funciones futuras; RN-015 `isSoldOut`; RN-016 `trailerUrl` (embed = frontend).
+- Recomendaciones por género compartido (prioriza con función en la ciudad).
+- Guía `docs/features/hu-004-movie-detail.md`.
 
 ---
 
@@ -214,6 +232,8 @@ Health OK
 
 - Backlog completo: `recursos/PRODUCT_BACKLOG_ORDENADO.md`
 - HU-002 guía: `docs/features/hu-002-locations.md`
+- HU-003 guía: `docs/features/hu-003-movies.md`
+- HU-004 guía: `docs/features/hu-004-movie-detail.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -227,5 +247,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-003 Cartelera semanal.
+Siguiente: HU-005 Próximos estrenos.
 ```

@@ -5,6 +5,7 @@ import databaseConfig from './config/database.config';
 import { validateEnv } from './config/validate-env';
 import { HealthModule } from './health/health.module';
 import { LocationsModule } from './locations/locations.module';
+import { MoviesModule } from './movies/movies.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -76,6 +77,8 @@ import { LocationsModule } from './locations/locations.module';
     HealthModule,
     /** Catálogo geográfico País → Departamento → Ciudad (HU-002). */
     LocationsModule,
+    /** Cartelera semanal: películas + funciones por ciudad (HU-003). */
+    MoviesModule,
   ],
 })
 export class AppModule {}

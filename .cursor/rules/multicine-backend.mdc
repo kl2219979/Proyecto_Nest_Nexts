@@ -43,6 +43,8 @@ alwaysApply: true
 ## Ya hecho
 - HU-001 infraestructura
 - HU-002 locations (countries/departments/cities + POST /users/location)
+- HU-003 cartelera semanal (GET /movies, GET /movies/today)
+- HU-004 detalle de película (GET /movies/:id, recommendations)
 
 ## Siguiente
-- HU-003 cartelera semanal
+- HU-005 próximos estrenos
