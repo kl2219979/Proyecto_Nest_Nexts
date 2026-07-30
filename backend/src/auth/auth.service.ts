@@ -36,7 +36,7 @@ import { JwtPayload } from './jwt/jwt-payload';
 import {
   benefitsForLevel,
   LoginMembershipSummary,
-} from './membership-benefits';
+} from '../membership/membership-benefits';
 
 /** Coste BCrypt (2^10 iteraciones): equilibrio seguridad / latencia. */
 const BCRYPT_ROUNDS = 10;

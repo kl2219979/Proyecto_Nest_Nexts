@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -33,7 +33,7 @@ import { JwtStrategy } from './jwt/jwt.strategy';
       City,
       Cinema,
     ]),
-    MembershipModule,
+    forwardRef(() => MembershipModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     /**
      * JwtModule asíncrono: lee `JWT_SECRET` del entorno.

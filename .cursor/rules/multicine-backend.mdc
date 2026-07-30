@@ -48,6 +48,7 @@ alwaysApply: true
 - HU-005 próximos estrenos (GET /movies/upcoming, POST /notifications/upcoming)
 - HU-006 registro de usuario + membresía digital
 - HU-007 login JWT + refresh + logout + reset password
+- HU-008 perfil get/update + membresía/beneficios/QR
 
 ## Siguiente
-- HU-008 consulta de perfil y beneficios de membresía
+- HU-009 selección de función y formato de proyección

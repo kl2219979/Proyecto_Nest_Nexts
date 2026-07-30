@@ -12,10 +12,11 @@ import { Gender } from '../enums/user.enums';
 import { User } from './user.entity';
 
 /**
- * Perfil personal del usuario (HU-006).
+ * Perfil personal del usuario (HU-006 / HU-008).
  *
  * Se crea en el mismo flujo que la cuenta: nombre, documento ya está
- * en `User`; aquí van datos demográficos y preferencia de ciudad/cine.
+ * en `User`; aquí van datos demográficos, preferencia de ciudad/cine
+ * y fotografía opcional (`photoUrl`).
  */
 @Entity('user_profiles')
 export class UserProfile {
@@ -62,4 +63,11 @@ export class UserProfile {
   @ManyToOne(() => Cinema, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'favoriteCinemaId' })
   favoriteCinema!: Cinema | null;
+
+  /**
+   * URL de fotografía de perfil (opcional, HU-008).
+   * El backend solo almacena la URL; el upload de archivos es frontend/CDN.
+   */
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  photoUrl!: string | null;
 }

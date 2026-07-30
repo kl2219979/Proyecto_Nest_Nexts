@@ -1,13 +1,10 @@
-import {
-  MembershipLevel,
-  MembershipStatus,
-} from '../membership/enums/membership.enums';
+import { MembershipLevel, MembershipStatus } from './enums/membership.enums';
 
 /**
- * Beneficios vigentes por nivel de membresía (HU-007 login / RN-032 base).
+ * Beneficios vigentes por nivel de membresía (RN-032 / HU-008).
  *
- * Detalle completo de perfil/QR = HU-008; aquí solo lo necesario
- * para mostrar al entrar al portal.
+ * El login (HU-007) y `GET /membership` reutilizan esta tabla estática.
+ * Subidas de nivel y puntos reales = HU-023.
  */
 export type MembershipBenefit = {
   code: string;
@@ -16,7 +13,7 @@ export type MembershipBenefit = {
 };
 
 /**
- * Mapa estático nivel → beneficios activos.
+ * Mapa estático nivel → beneficios activos (RN-032).
  *
  * @param level - Nivel de la membresía del usuario.
  * @returns Lista de beneficios aplicables.
@@ -71,7 +68,7 @@ export function benefitsForLevel(level: MembershipLevel): MembershipBenefit[] {
 }
 
 /**
- * Resumen de membresía en la respuesta de login.
+ * Resumen de membresía en la respuesta de login (HU-007).
  */
 export type LoginMembershipSummary = {
   id: string;

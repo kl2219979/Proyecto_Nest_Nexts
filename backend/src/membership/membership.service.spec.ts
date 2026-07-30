@@ -1,5 +1,5 @@
 /**
- * Tests unitarios de `MembershipService` (HU-006).
+ * Tests unitarios de `MembershipService` (HU-006 / HU-008).
  */
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -15,6 +15,9 @@ describe('MembershipService', () => {
   let service: MembershipService;
 
   const membershipRepo = {
+    findOne: jest.fn(),
+  };
+  const walletRepo = {
     findOne: jest.fn(),
   };
   const userRepo = {
@@ -48,13 +51,14 @@ describe('MembershipService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     membershipRepo.findOne.mockResolvedValue(null);
+    walletRepo.findOne.mockResolvedValue({ balance: '0.00' });
     userRepo.findOne.mockResolvedValue({ id: 'user-1' });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MembershipService,
         { provide: getRepositoryToken(Membership), useValue: membershipRepo },
-        { provide: getRepositoryToken(Wallet), useValue: {} },
+        { provide: getRepositoryToken(Wallet), useValue: walletRepo },
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: DataSource, useValue: dataSource },
       ],
@@ -80,28 +84,67 @@ describe('MembershipService', () => {
   });
 
   /**
-   * Usuario inexistente.
+   * Rechaza si el usuario no existe.
    *
    * @returns {Promise<void>}
    */
-  it('createForUser rejects missing user', async () => {
+  it('createForUser throws NotFoundException when user missing', async () => {
     userRepo.findOne.mockResolvedValue(null);
-
     await expect(service.createForUser('missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
 
   /**
-   * RN-025: una sola membresía por usuario.
+   * Rechaza membresía duplicada (RN-025).
    *
    * @returns {Promise<void>}
    */
-  it('createForUser rejects duplicate membership', async () => {
-    membershipRepo.findOne.mockResolvedValue({ id: 'existing' });
-
+  it('createForUser throws ConflictException when membership exists', async () => {
+    membershipRepo.findOne.mockResolvedValue({ id: 'mem-1' });
     await expect(service.createForUser('user-1')).rejects.toBeInstanceOf(
       ConflictException,
+    );
+  });
+
+  /**
+   * GET detalle: beneficios Bronce + QR con código (RN-032 / RN-033).
+   *
+   * @returns {Promise<void>}
+   */
+  it('getDetailForUser returns benefits, QR payload and empty histories', async () => {
+    membershipRepo.findOne.mockResolvedValue({
+      id: 'mem-1',
+      userId: 'user-1',
+      code: 'MC-ABCDEF12',
+      status: MembershipStatus.ACTIVE,
+      level: MembershipLevel.BRONZE,
+      createdAt: new Date('2026-07-30T12:00:00Z'),
+    });
+
+    const detail = await service.getDetailForUser('user-1');
+
+    expect(detail.code).toBe('MC-ABCDEF12');
+    expect(detail.qr).toEqual({
+      payload: 'MC-ABCDEF12',
+      transferable: false,
+    });
+    expect(detail.benefits[0]?.discountPercent).toBe(5);
+    expect(detail.wallet.balance).toBe('0.00');
+    expect(detail.purchaseHistory).toEqual([]);
+    expect(detail.pointsHistory).toEqual([]);
+    expect(detail.activeReservations).toEqual([]);
+  });
+
+  /**
+   * GET detalle sin membresía → 404.
+   *
+   * @returns {Promise<void>}
+   */
+  it('getDetailForUser throws NotFoundException when missing', async () => {
+    membershipRepo.findOne.mockResolvedValue(null);
+    await expect(service.getDetailForUser('user-1')).rejects.toBeInstanceOf(
+      NotFoundException,
     );
   });
 });

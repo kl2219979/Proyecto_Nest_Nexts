@@ -34,7 +34,7 @@ export class Membership {
   user!: User;
 
   /**
-   * Código único legible / escaneable (QR en HU-008).
+   * Código único legible; payload del QR de socio (HU-008 / RN-033).
    * @example "MC-A1B2C3D4"
    */
   @Column({ type: 'varchar', length: 32, unique: true })

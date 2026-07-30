@@ -11,6 +11,7 @@ import { LocationsModule } from './locations/locations.module';
 import { MembershipModule } from './membership/membership.module';
 import { MoviesModule } from './movies/movies.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ProfileModule } from './profile/profile.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -97,10 +98,12 @@ import { NotificationsModule } from './notifications/notifications.module';
     NotificationsModule,
     /** Cartelera, detalle y próximos estrenos (HU-003 / HU-004 / HU-005). */
     MoviesModule,
-    /** Membresía digital + billetera (HU-006). */
+    /** Membresía digital + billetera + consulta/QR (HU-006 / HU-008). */
     MembershipModule,
-    /** Registro y activación de cuenta (HU-006). */
+    /** Registro y activación de cuenta (HU-006) + sesión JWT (HU-007). */
     AuthModule,
+    /** Perfil y preferencias del usuario autenticado (HU-008). */
+    ProfileModule,
   ],
   providers: [
     /**

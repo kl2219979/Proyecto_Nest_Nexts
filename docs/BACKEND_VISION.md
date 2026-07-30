@@ -31,7 +31,8 @@
 | HU-005 Próximos estrenos | **Hecho** | GET /movies/upcoming + POST /notifications/upcoming · RN-017…020 |
 | HU-006 Registro + membresía | **Hecho** | POST /auth/register + /activate · membresía/wallet · RN-021…026 |
 | HU-007 Login JWT | **Hecho** | login/refresh/logout/forgot/reset · RN-027…031 · auditoría |
-| HU-008 … HU-029 | Pendiente | Ver sección 3 |
+| HU-008 Perfil + membresía | **Hecho** | GET/PUT /profile · GET /membership · QR · RN-032…034 |
+| HU-009 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -88,6 +89,14 @@
 - RN-027 bloqueo 5 fallos / 15 min; RN-031 solo email verificado; auditoría `login_audits` (IP + UA).
 - `JwtAuthGuard` + `@CurrentUser()` exportados para HUs siguientes; beneficios por nivel en respuesta de login.
 - Guía `docs/features/hu-007-auth-login.md`.
+
+#### HU-008 — Consulta de perfil y beneficios de membresía
+- Módulo `profile`: `GET /profile`, `PUT /profile` (JWT); `UserProfile.photoUrl` opcional.
+- Preferencias de notificación editables; cambio de email con re-verificación (RN-034 → `POST /auth/activate`).
+- `GET /membership` (JWT): nivel, beneficios (RN-032), `qr.payload` = código único (RN-033), wallet.
+- Historiales compras/puntos/reservas = arrays vacíos (stubs hasta HU-014 / HU-023 / carrito).
+- Beneficios centralizados en `membership/membership-benefits.ts` (reuso login + perfil).
+- Guía `docs/features/hu-008-profile-membership.md`.
 
 ---
 
@@ -262,6 +271,7 @@ Health OK
 - HU-005 guía: `docs/features/hu-005-upcoming.md`
 - HU-006 guía: `docs/features/hu-006-auth-register.md`
 - HU-007 guía: `docs/features/hu-007-auth-login.md`
+- HU-008 guía: `docs/features/hu-008-profile-membership.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -275,5 +285,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-008 Consulta de Perfil y Beneficios de Membresía.
+Siguiente: HU-009 Selección de Función y Formato de Proyección.
 ```
