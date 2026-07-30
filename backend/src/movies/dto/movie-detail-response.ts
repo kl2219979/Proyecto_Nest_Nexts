@@ -1,7 +1,12 @@
-import { AudioType, MovieFormat, RoomType } from '../enums/movie.enums';
+import {
+  AudioType,
+  MovieFormat,
+  MovieStatus,
+  RoomType,
+} from '../enums/movie.enums';
 
 /**
- * Tipos de respuesta del detalle de película (HU-004).
+ * Tipos de respuesta del detalle de película (HU-004 / HU-005).
  */
 
 /** Miembro del elenco en la ficha. */
@@ -53,6 +58,8 @@ export type MovieDetailResponse = {
   durationMinutes: number;
   classification: string;
   releaseDate: string | null;
+  /** Estado de catálogo (HU-005): UPCOMING | NOW_SHOWING. */
+  status: MovieStatus;
   rating: number;
   isPremiere: boolean;
   languages: string[];

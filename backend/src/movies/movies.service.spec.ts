@@ -1,5 +1,5 @@
 /**
- * Tests unitarios de `MoviesService` (HU-003 / HU-004).
+ * Tests unitarios de `MoviesService` (HU-003 / HU-004 / HU-005).
  *
  * No levantamos Postgres: mockeamos repositorios TypeORM.
  */
@@ -7,9 +7,16 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { City } from '../locations/entities/city.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 import { Movie } from './entities/movie.entity';
+import { MovieCityRelease } from './entities/movie-city-release.entity';
 import { Showtime } from './entities/showtime.entity';
-import { AudioType, MovieFormat, RoomType } from './enums/movie.enums';
+import {
+  AudioType,
+  MovieFormat,
+  MovieStatus,
+  RoomType,
+} from './enums/movie.enums';
 import { MoviesService } from './movies.service';
 
 describe('MoviesService', () => {
@@ -17,6 +24,7 @@ describe('MoviesService', () => {
 
   const movieRepo = {
     findOne: jest.fn(),
+    save: jest.fn(),
     createQueryBuilder: jest.fn(),
   };
   const showtimeRepo = {
@@ -24,6 +32,13 @@ describe('MoviesService', () => {
   };
   const cityRepo = {
     findOne: jest.fn(),
+  };
+  const releaseRepo = {
+    find: jest.fn(),
+    createQueryBuilder: jest.fn(),
+  };
+  const notificationsService = {
+    dispatchUpcomingForMovie: jest.fn(),
   };
 
   /**
@@ -40,6 +55,11 @@ describe('MoviesService', () => {
         { provide: getRepositoryToken(Movie), useValue: movieRepo },
         { provide: getRepositoryToken(Showtime), useValue: showtimeRepo },
         { provide: getRepositoryToken(City), useValue: cityRepo },
+        {
+          provide: getRepositoryToken(MovieCityRelease),
+          useValue: releaseRepo,
+        },
+        { provide: NotificationsService, useValue: notificationsService },
       ],
     }).compile();
 
@@ -235,6 +255,7 @@ describe('MoviesService', () => {
       classification: '12+',
       durationMinutes: 142,
       releaseDate: '2026-07-01',
+      status: MovieStatus.NOW_SHOWING,
       rating: '8.4',
       isPremiere: true,
       genres: [{ name: 'Acción' }],
@@ -242,6 +263,7 @@ describe('MoviesService', () => {
         { name: 'Diego Vargas', role: 'Capitán Nova', sortOrder: 0 },
       ],
     });
+    releaseRepo.find.mockResolvedValue([]);
 
     mockShowtimeQb([
       {
@@ -283,6 +305,7 @@ describe('MoviesService', () => {
     });
 
     expect(detail.title).toBe('Odisea Estelar');
+    expect(detail.status).toBe(MovieStatus.NOW_SHOWING);
     expect(detail.trailerUrl).toContain('youtube');
     expect(detail.cast).toHaveLength(1);
     expect(detail.showtimes[0].isSoldOut).toBe(true);
@@ -357,5 +380,93 @@ describe('MoviesService', () => {
     expect(result.recommendations).toHaveLength(1);
     expect(result.recommendations[0].title).toBe('Pixel Heroes');
     expect(result.movieId).toBe('m-1');
+  });
+
+  /**
+   * HU-005: próximos estrenos ordenados por fecha (RN-017 / RN-018).
+   *
+   * @returns {Promise<void>}
+   */
+  it('getUpcoming lists UPCOMING movies ordered by release date', async () => {
+    cityRepo.findOne.mockResolvedValue({ id: 'city-1' });
+
+    const releaseQb = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn().mockResolvedValue([
+        {
+          movieId: 'm-risa',
+          cinemaId: null,
+          releaseDate: '2026-10-01',
+          cinema: null,
+          movie: {
+            id: 'm-risa',
+            title: 'Risa Contagiosa',
+            posterUrl: 'https://example.com/risa.jpg',
+            trailerUrl: 'https://youtube.com/r',
+            synopsis: 'Comedia',
+            classification: '12+',
+            durationMinutes: 102,
+            status: MovieStatus.UPCOMING,
+            genres: [{ name: 'Comedia' }],
+          },
+        },
+        {
+          movieId: 'm-nocturna',
+          cinemaId: null,
+          releaseDate: '2026-09-15',
+          cinema: null,
+          movie: {
+            id: 'm-nocturna',
+            title: 'Nocturna del Caribe',
+            posterUrl: 'https://example.com/nocturna.jpg',
+            trailerUrl: 'https://youtube.com/n',
+            synopsis: 'Terror',
+            classification: '15+',
+            durationMinutes: 108,
+            status: MovieStatus.UPCOMING,
+            genres: [{ name: 'Terror' }],
+          },
+        },
+      ]),
+    };
+    releaseRepo.createQueryBuilder.mockReturnValue(releaseQb);
+
+    const result = await service.getUpcoming({
+      cityId: '00000000-0000-4000-8000-000000000001',
+    });
+
+    expect(result.movies).toHaveLength(2);
+    expect(result.movies[0].title).toBe('Nocturna del Caribe');
+    expect(result.movies[1].title).toBe('Risa Contagiosa');
+    expect(result.movies[0].status).toBe(MovieStatus.UPCOMING);
+    expect(result.movies[0].daysUntilRelease).toBeGreaterThanOrEqual(0);
+  });
+
+  /**
+   * HU-005 / RN-020: promover a cartelera dispara avisos.
+   *
+   * @returns {Promise<void>}
+   */
+  it('promoteToNowShowing updates status and dispatches notifications', async () => {
+    movieRepo.findOne.mockResolvedValue({
+      id: 'm-nocturna',
+      status: MovieStatus.UPCOMING,
+    });
+    movieRepo.save.mockImplementation(async (m: { status: MovieStatus }) => m);
+    notificationsService.dispatchUpcomingForMovie.mockResolvedValue({
+      movieId: 'm-nocturna',
+      notifiedCount: 2,
+    });
+
+    const result = await service.promoteToNowShowing('m-nocturna');
+
+    expect(result.status).toBe(MovieStatus.NOW_SHOWING);
+    expect(result.notifiedCount).toBe(2);
+    expect(notificationsService.dispatchUpcomingForMovie).toHaveBeenCalledWith(
+      'm-nocturna',
+    );
   });
 });

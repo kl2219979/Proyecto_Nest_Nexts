@@ -28,3 +28,14 @@ export enum RoomType {
   VIP = 'VIP',
   IMAX = 'IMAX',
 }
+
+/**
+ * Estado de publicación de la película en el catálogo (HU-005).
+ *
+ * - `UPCOMING`: solo listado “Próximamente” (RN-017).
+ * - `NOW_SHOWING`: en cartelera (puede tener funciones).
+ */
+export enum MovieStatus {
+  UPCOMING = 'UPCOMING',
+  NOW_SHOWING = 'NOW_SHOWING',
+}

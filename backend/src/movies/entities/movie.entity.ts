@@ -6,15 +6,18 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { MovieStatus } from '../enums/movie.enums';
 import { CastMember } from './cast-member.entity';
 import { Genre } from './genre.entity';
+import { MovieCityRelease } from './movie-city-release.entity';
 import { Showtime } from './showtime.entity';
 
 /**
- * Película del catálogo (HU-003 + HU-004).
+ * Película del catálogo (HU-003 + HU-004 + HU-005).
  *
  * HU-003 usa los campos de tarjeta (póster, géneros, rating…).
  * HU-004 añade ficha completa: banner, tráiler, sinopsis, elenco, estreno.
+ * HU-005 añade `status` (próximo estreno vs en cartelera) y fechas por ciudad.
  */
 @Entity('movies')
 export class Movie {
@@ -49,8 +52,8 @@ export class Movie {
   synopsis!: string | null;
 
   /**
-   * Fecha de estreno (solo día; sin hora).
-   * Puede variar por ciudad en HU-005; aquí es la fecha de catálogo.
+   * Fecha de estreno de catálogo (fallback).
+   * En “Próximamente” la fecha efectiva por ciudad está en `MovieCityRelease` (RN-018).
    */
   @Column({ type: 'date', nullable: true })
   releaseDate!: string | null;
@@ -80,6 +83,17 @@ export class Movie {
   @Column({ type: 'boolean', default: false })
   isPremiere!: boolean;
 
+  /**
+   * Estado de publicación (HU-005 / RN-017 / RN-020).
+   * Solo `UPCOMING` aparece en GET /movies/upcoming.
+   */
+  @Column({
+    type: 'enum',
+    enum: MovieStatus,
+    default: MovieStatus.NOW_SHOWING,
+  })
+  status!: MovieStatus;
+
   /** Si es `false`, no debe listarse en cartelera ni detalle público. */
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
@@ -99,6 +113,12 @@ export class Movie {
   /** Elenco principal (HU-004). */
   @OneToMany(() => CastMember, (member) => member.movie, { cascade: true })
   castMembers!: CastMember[];
+
+  /** Fechas de estreno por ciudad/complejo (HU-005 / RN-018). */
+  @OneToMany(() => MovieCityRelease, (release) => release.movie, {
+    cascade: true,
+  })
+  cityReleases!: MovieCityRelease[];
 
   /** Funciones programadas de esta película. */
   @OneToMany(() => Showtime, (showtime) => showtime.movie)

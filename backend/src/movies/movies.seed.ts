@@ -1,14 +1,16 @@
 import { DataSource } from 'typeorm';
 import { Cinema } from '../locations/entities/cinema.entity';
+import { City } from '../locations/entities/city.entity';
 import { CastMember } from './entities/cast-member.entity';
 import { Genre } from './entities/genre.entity';
 import { Movie } from './entities/movie.entity';
+import { MovieCityRelease } from './entities/movie-city-release.entity';
 import { Room } from './entities/room.entity';
 import { Showtime } from './entities/showtime.entity';
-import { AudioType, MovieFormat, RoomType } from './enums/movie.enums';
+import { AudioType, MovieFormat, MovieStatus, RoomType } from './enums/movie.enums';
 
 /**
- * Inserta cartelera + fichas demo (HU-003 / HU-004).
+ * Inserta cartelera + fichas + próximos estrenos demo (HU-003 / HU-004 / HU-005).
  *
  * Depende del seed de locations (cines de Medellín / Bogotá).
  * Idempotente: si ya hay películas, no vuelve a insertar.
@@ -17,6 +19,7 @@ import { AudioType, MovieFormat, RoomType } from './enums/movie.enums';
  * - función **agotada** (RN-011 / RN-015)
  * - función **inactiva** (RN-010)
  * - banner, tráiler, sinopsis, elenco y precios por formato (HU-004)
+ * - películas `UPCOMING` con fechas distintas por ciudad (RN-017 / RN-018)
  *
  * @param dataSource - Conexión TypeORM ya inicializada.
  * @returns {Promise<void>}
@@ -28,10 +31,12 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
   }
 
   const cinemaRepo = dataSource.getRepository(Cinema);
+  const cityRepo = dataSource.getRepository(City);
   const genreRepo = dataSource.getRepository(Genre);
   const castRepo = dataSource.getRepository(CastMember);
   const roomRepo = dataSource.getRepository(Room);
   const showtimeRepo = dataSource.getRepository(Showtime);
+  const releaseRepo = dataSource.getRepository(MovieCityRelease);
 
   const laureles = await cinemaRepo.findOne({
     where: { name: 'Multicine Laureles' },
@@ -42,8 +47,10 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
   const andino = await cinemaRepo.findOne({
     where: { name: 'Multicine Andino' },
   });
+  const medellin = await cityRepo.findOne({ where: { name: 'Medellín' } });
+  const bogota = await cityRepo.findOne({ where: { name: 'Bogotá' } });
 
-  if (!laureles || !premium || !andino) {
+  if (!laureles || !premium || !andino || !medellin || !bogota) {
     return;
   }
 
@@ -51,7 +58,9 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
   const aventura = genreRepo.create({ name: 'Aventura' });
   const drama = genreRepo.create({ name: 'Drama' });
   const animacion = genreRepo.create({ name: 'Animación' });
-  await genreRepo.save([accion, aventura, drama, animacion]);
+  const terror = genreRepo.create({ name: 'Terror' });
+  const comedia = genreRepo.create({ name: 'Comedia' });
+  await genreRepo.save([accion, aventura, drama, animacion, terror, comedia]);
 
   const odisea = movieRepo.create({
     title: 'Odisea Estelar',
@@ -66,6 +75,7 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
     director: 'Ana Restrepo',
     rating: 8.4,
     isPremiere: true,
+    status: MovieStatus.NOW_SHOWING,
     isActive: true,
     genres: [accion, aventura],
   });
@@ -83,6 +93,7 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
     director: 'Carlos Mejía',
     rating: 7.9,
     isPremiere: false,
+    status: MovieStatus.NOW_SHOWING,
     isActive: true,
     genres: [drama],
   });
@@ -100,6 +111,7 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
     director: 'Laura Gómez',
     rating: 8.1,
     isPremiere: true,
+    status: MovieStatus.NOW_SHOWING,
     isActive: true,
     genres: [animacion, aventura],
   });
@@ -117,11 +129,56 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
     director: 'N/A',
     rating: 6.0,
     isPremiere: false,
+    status: MovieStatus.NOW_SHOWING,
     isActive: true,
     genres: [drama],
   });
 
-  await movieRepo.save([odisea, rio, pixel, inactiveBillboard]);
+  /** HU-005: próximos estrenos (sin funciones aún). */
+  const nocturna = movieRepo.create({
+    title: 'Nocturna del Caribe',
+    posterUrl: 'https://cdn.multicine.local/posters/nocturna-caribe.jpg',
+    bannerUrl: 'https://cdn.multicine.local/banners/nocturna-caribe.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
+    synopsis:
+      'Un faro abandonado guarda el secreto de una tormenta que nunca termina. Terror atmosférico en el Caribe colombiano.',
+    releaseDate: '2026-09-15',
+    classification: '15+',
+    durationMinutes: 108,
+    director: 'Elena Vargas',
+    rating: 0,
+    isPremiere: false,
+    status: MovieStatus.UPCOMING,
+    isActive: true,
+    genres: [terror, drama],
+  });
+
+  const risa = movieRepo.create({
+    title: 'Risa Contagiosa',
+    posterUrl: 'https://cdn.multicine.local/posters/risa-contagiosa.jpg',
+    bannerUrl: 'https://cdn.multicine.local/banners/risa-contagiosa.jpg',
+    trailerUrl: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
+    synopsis:
+      'Dos stand-uperos rivales deben compartir escenario en una gira que saldrá muy mal… o muy bien.',
+    releaseDate: '2026-10-01',
+    classification: '12+',
+    durationMinutes: 102,
+    director: 'Miguel Soto',
+    rating: 0,
+    isPremiere: false,
+    status: MovieStatus.UPCOMING,
+    isActive: true,
+    genres: [comedia],
+  });
+
+  await movieRepo.save([
+    odisea,
+    rio,
+    pixel,
+    inactiveBillboard,
+    nocturna,
+    risa,
+  ]);
 
   await castRepo.save([
     castRepo.create({
@@ -165,6 +222,61 @@ export async function seedMovies(dataSource: DataSource): Promise<void> {
       name: 'Voz: Valentina Díaz',
       role: 'Bit',
       sortOrder: 1,
+    }),
+    castRepo.create({
+      movieId: nocturna.id,
+      name: 'Isabel Mora',
+      role: 'Farera',
+      sortOrder: 0,
+    }),
+    castRepo.create({
+      movieId: risa.id,
+      name: 'Pedro Nieto',
+      role: 'Lucho',
+      sortOrder: 0,
+    }),
+  ]);
+
+  /**
+   * RN-018: mismas películas, fechas distintas por ciudad / complejo.
+   * Medellín estrena Nocturna antes que Bogotá; Laureles un día antes que Premium.
+   */
+  await releaseRepo.save([
+    releaseRepo.create({
+      movieId: nocturna.id,
+      cityId: medellin.id,
+      cinemaId: null,
+      releaseDate: '2026-09-15',
+    }),
+    releaseRepo.create({
+      movieId: nocturna.id,
+      cityId: medellin.id,
+      cinemaId: laureles.id,
+      releaseDate: '2026-09-14',
+    }),
+    releaseRepo.create({
+      movieId: nocturna.id,
+      cityId: medellin.id,
+      cinemaId: premium.id,
+      releaseDate: '2026-09-16',
+    }),
+    releaseRepo.create({
+      movieId: nocturna.id,
+      cityId: bogota.id,
+      cinemaId: null,
+      releaseDate: '2026-09-22',
+    }),
+    releaseRepo.create({
+      movieId: risa.id,
+      cityId: medellin.id,
+      cinemaId: null,
+      releaseDate: '2026-10-01',
+    }),
+    releaseRepo.create({
+      movieId: risa.id,
+      cityId: bogota.id,
+      cinemaId: null,
+      releaseDate: '2026-10-08',
     }),
   ]);
 

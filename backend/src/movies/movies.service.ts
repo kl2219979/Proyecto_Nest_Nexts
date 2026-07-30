@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { City } from '../locations/entities/city.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 import { BillboardQueryDto } from './dto/billboard-query.dto';
 import {
   BillboardMovie,
@@ -20,9 +21,16 @@ import {
   MovieRecommendation,
   MovieRecommendationsResponse,
 } from './dto/movie-detail-response';
+import { UpcomingQueryDto } from './dto/upcoming-query.dto';
+import {
+  UpcomingCinemaRelease,
+  UpcomingMovieCard,
+  UpcomingMoviesResponse,
+} from './dto/upcoming-response';
 import { Movie } from './entities/movie.entity';
+import { MovieCityRelease } from './entities/movie-city-release.entity';
 import { Showtime } from './entities/showtime.entity';
-import { AudioType, MovieFormat } from './enums/movie.enums';
+import { AudioType, MovieFormat, MovieStatus } from './enums/movie.enums';
 
 /** Ventana fija de cartelera semanal (RN-012). */
 const BILLBOARD_DAYS = 7;
@@ -31,17 +39,19 @@ const BILLBOARD_DAYS = 7;
 const MAX_RECOMMENDATIONS = 6;
 
 /**
- * Lógica de negocio de cartelera (HU-003) y detalle de película (HU-004).
+ * Lógica de negocio de cartelera, detalle y próximos estrenos.
  *
  * Controller → Service → Repository:
- * arma listados semanales y la ficha completa con funciones futuras por ciudad.
+ * arma listados semanales, ficha completa y sección “Próximamente” (HU-005).
  */
 @Injectable()
 export class MoviesService {
   /**
-   * @param movieRepo - Acceso a `movies` (detalle y recomendaciones).
-   * @param showtimeRepo - Acceso a `showtimes` (cartelera y funciones del detalle).
-   * @param cityRepo - Valida que la ciudad exista antes de consultar.
+   * @param movieRepo - Acceso a `movies`.
+   * @param showtimeRepo - Acceso a `showtimes`.
+   * @param cityRepo - Valida que la ciudad exista.
+   * @param releaseRepo - Fechas de estreno por ciudad/complejo (RN-018).
+   * @param notificationsService - Disparo de avisos al pasar a cartelera (RN-020).
    */
   constructor(
     @InjectRepository(Movie)
@@ -50,6 +60,9 @@ export class MoviesService {
     private readonly showtimeRepo: Repository<Showtime>,
     @InjectRepository(City)
     private readonly cityRepo: Repository<City>,
+    @InjectRepository(MovieCityRelease)
+    private readonly releaseRepo: Repository<MovieCityRelease>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -73,10 +86,104 @@ export class MoviesService {
   }
 
   /**
+   * Listado “Próximamente” ordenado por fecha de estreno (HU-005 / RN-017).
+   *
+   * Solo películas `status = UPCOMING` con fecha de estreno en la ciudad (RN-018).
+   *
+   * @param query - `cityId` obligatorio.
+   * @returns {Promise<UpcomingMoviesResponse>} Tarjetas con contador regresivo.
+   */
+  async getUpcoming(query: UpcomingQueryDto): Promise<UpcomingMoviesResponse> {
+    await this.assertCityExists(query.cityId);
+
+    const releases = await this.releaseRepo
+      .createQueryBuilder('release')
+      .innerJoinAndSelect('release.movie', 'movie')
+      .leftJoinAndSelect('movie.genres', 'genre')
+      .leftJoinAndSelect('release.cinema', 'cinema')
+      .where('movie.isActive = :active', { active: true })
+      .andWhere('movie.status = :status', { status: MovieStatus.UPCOMING })
+      .andWhere('release.cityId = :cityId', { cityId: query.cityId })
+      .getMany();
+
+    const byMovie = new Map<string, MovieCityRelease[]>();
+    for (const release of releases) {
+      const list = byMovie.get(release.movieId) ?? [];
+      list.push(release);
+      byMovie.set(release.movieId, list);
+    }
+
+    const movies: UpcomingMovieCard[] = [];
+    for (const movieReleases of byMovie.values()) {
+      const movie = movieReleases[0].movie;
+      const resolved = this.resolveCityReleaseDate(movieReleases);
+      if (!resolved) {
+        continue;
+      }
+
+      movies.push({
+        id: movie.id,
+        title: movie.title,
+        posterUrl: movie.posterUrl,
+        trailerUrl: movie.trailerUrl,
+        synopsis: movie.synopsis,
+        genres: (movie.genres ?? []).map((g) => g.name).sort(),
+        classification: movie.classification,
+        durationMinutes: movie.durationMinutes,
+        releaseDate: resolved.releaseDate,
+        daysUntilRelease: this.daysUntil(resolved.releaseDate),
+        status: movie.status,
+        releasesByCinema: resolved.releasesByCinema,
+      });
+    }
+
+    movies.sort((a, b) => {
+      if (a.releaseDate !== b.releaseDate) {
+        return a.releaseDate.localeCompare(b.releaseDate);
+      }
+      return a.title.localeCompare(b.title);
+    });
+
+    return { cityId: query.cityId, movies };
+  }
+
+  /**
+   * Pasa una película de próximo estreno a cartelera y dispara avisos (RN-020).
+   *
+   * Pensado para el admin (HU-020); expuesto aquí para poder probar el flujo
+   * y reutilizarlo cuando exista el backoffice.
+   *
+   * @param movieId - UUID de la película.
+   * @returns Cantidad de avisos disparados.
+   * @throws {NotFoundException} Si la película no existe.
+   */
+  async promoteToNowShowing(
+    movieId: string,
+  ): Promise<{ movieId: string; status: MovieStatus; notifiedCount: number }> {
+    const movie = await this.movieRepo.findOne({ where: { id: movieId } });
+    if (!movie) {
+      throw new NotFoundException(`Película no encontrada: ${movieId}`);
+    }
+
+    movie.status = MovieStatus.NOW_SHOWING;
+    await this.movieRepo.save(movie);
+
+    const dispatch =
+      await this.notificationsService.dispatchUpcomingForMovie(movieId);
+
+    return {
+      movieId,
+      status: movie.status,
+      notifiedCount: dispatch.notifiedCount,
+    };
+  }
+
+  /**
    * Ficha completa de una película para una ciudad (HU-004).
    *
    * Incluye sinopsis, elenco, tráiler URL, precios por formato y
    * solo funciones **futuras** de esa ciudad (RN-014), con `isSoldOut` (RN-015).
+   * Si es próximo estreno, `releaseDate` usa la fecha de la ciudad (RN-018).
    *
    * @param movieId - UUID de la película.
    * @param query - Debe incluir `cityId`.
@@ -108,6 +215,11 @@ export class MoviesService {
     const languages = [...new Set(detailShowtimes.map((s) => s.language))];
     const formats = [...new Set(detailShowtimes.map((s) => s.format))];
 
+    const cityReleaseDate = await this.findCityReleaseDate(
+      movieId,
+      query.cityId,
+    );
+
     return {
       id: movie.id,
       title: movie.title,
@@ -123,7 +235,8 @@ export class MoviesService {
       genres: (movie.genres ?? []).map((g) => g.name).sort(),
       durationMinutes: movie.durationMinutes,
       classification: movie.classification,
-      releaseDate: movie.releaseDate,
+      releaseDate: cityReleaseDate ?? movie.releaseDate,
+      status: movie.status ?? MovieStatus.NOW_SHOWING,
       rating: Number(movie.rating),
       isPremiere: movie.isPremiere,
       languages,
@@ -169,6 +282,7 @@ export class MoviesService {
       .innerJoinAndSelect('movie.genres', 'genre')
       .innerJoin('movie.genres', 'sharedGenre')
       .where('movie.isActive = :active', { active: true })
+      .andWhere('movie.status = :status', { status: MovieStatus.NOW_SHOWING })
       .andWhere('movie.id != :movieId', { movieId })
       .andWhere('sharedGenre.id IN (:...genreIds)', { genreIds })
       .orderBy('movie.rating', 'DESC')
@@ -275,6 +389,74 @@ export class MoviesService {
     if (!city) {
       throw new NotFoundException(`Ciudad no encontrada: ${cityId}`);
     }
+  }
+
+  /**
+   * Resuelve la fecha de estreno mostrada para una ciudad (RN-018).
+   *
+   * Preferencia: fecha a nivel ciudad (`cinemaId` null); si no hay,
+   * la más temprana entre complejos de esa ciudad.
+   *
+   * @param releases - Filas de estreno de la misma película y ciudad.
+   */
+  private resolveCityReleaseDate(releases: MovieCityRelease[]): {
+    releaseDate: string;
+    releasesByCinema: UpcomingCinemaRelease[];
+  } | null {
+    if (releases.length === 0) {
+      return null;
+    }
+
+    const cityLevel = releases.find((r) => r.cinemaId === null);
+    const cinemaReleases = releases
+      .filter((r) => r.cinemaId !== null && r.cinema)
+      .map((r) => ({
+        cinemaId: r.cinemaId as string,
+        cinemaName: r.cinema!.name,
+        releaseDate: r.releaseDate,
+      }))
+      .sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
+
+    let releaseDate = cityLevel?.releaseDate;
+    if (!releaseDate && cinemaReleases.length > 0) {
+      releaseDate = cinemaReleases[0].releaseDate;
+    }
+    if (!releaseDate) {
+      return null;
+    }
+
+    return { releaseDate, releasesByCinema: cinemaReleases };
+  }
+
+  /**
+   * Busca la fecha de estreno de una película en una ciudad.
+   *
+   * @param movieId - UUID película.
+   * @param cityId - UUID ciudad.
+   */
+  private async findCityReleaseDate(
+    movieId: string,
+    cityId: string,
+  ): Promise<string | null> {
+    const releases = await this.releaseRepo.find({
+      where: { movieId, cityId },
+      relations: { cinema: true },
+    });
+    return this.resolveCityReleaseDate(releases)?.releaseDate ?? null;
+  }
+
+  /**
+   * Días enteros desde hoy (local) hasta `releaseDate` (YYYY-MM-DD).
+   * Nunca negativo (estrenos pasados → 0).
+   *
+   * @param releaseDate - Fecha de estreno.
+   */
+  private daysUntil(releaseDate: string): number {
+    const today = this.formatLocalDate(new Date());
+    const todayMs = this.parseLocalDate(today).getTime();
+    const releaseMs = this.parseLocalDate(releaseDate).getTime();
+    const diff = Math.ceil((releaseMs - todayMs) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diff);
   }
 
   /**
@@ -459,6 +641,9 @@ export class MoviesService {
       .innerJoinAndSelect('room.cinema', 'cinema')
       .where('showtime.isActive = :active', { active: true })
       .andWhere('movie.isActive = :movieActive', { movieActive: true })
+      .andWhere('movie.status = :movieStatus', {
+        movieStatus: MovieStatus.NOW_SHOWING,
+      })
       .andWhere('cinema.isActive = :cinemaActive', { cinemaActive: true })
       .andWhere('cinema.cityId = :cityId', { cityId: filters.cityId })
       .andWhere('showtime.startsAt >= :rangeStart', {

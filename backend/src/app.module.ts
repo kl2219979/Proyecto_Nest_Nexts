@@ -6,6 +6,7 @@ import { validateEnv } from './config/validate-env';
 import { HealthModule } from './health/health.module';
 import { LocationsModule } from './locations/locations.module';
 import { MoviesModule } from './movies/movies.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -77,7 +78,9 @@ import { MoviesModule } from './movies/movies.module';
     HealthModule,
     /** Catálogo geográfico País → Departamento → Ciudad (HU-002). */
     LocationsModule,
-    /** Cartelera semanal: películas + funciones por ciudad (HU-003). */
+    /** Avisos de estreno (HU-005); también importado por MoviesModule. */
+    NotificationsModule,
+    /** Cartelera, detalle y próximos estrenos (HU-003 / HU-004 / HU-005). */
     MoviesModule,
   ],
 })

@@ -12,24 +12,27 @@ import {
   MovieDetailResponse,
   MovieRecommendationsResponse,
 } from './dto/movie-detail-response';
+import { UpcomingQueryDto } from './dto/upcoming-query.dto';
+import { UpcomingMoviesResponse } from './dto/upcoming-response';
 import { MoviesService } from './movies.service';
 
 /**
- * Endpoints de cartelera (HU-003) y detalle de película (HU-004).
+ * Endpoints de cartelera (HU-003), detalle (HU-004) y próximos estrenos (HU-005).
  *
  * Rutas finales (con prefijo global):
  * - `GET /api/v1/movies`
  * - `GET /api/v1/movies/today`
+ * - `GET /api/v1/movies/upcoming`
  * - `GET /api/v1/movies/:id`
  * - `GET /api/v1/movies/:id/recommendations`
  *
- * Orden de declaración: rutas estáticas (`today`) antes de `:id`.
+ * Orden de declaración: rutas estáticas (`today`, `upcoming`) antes de `:id`.
  */
 @ApiTags('Movies')
 @Controller('movies')
 export class MoviesController {
   /**
-   * @param moviesService - Servicio de cartelera y detalle.
+   * @param moviesService - Servicio de cartelera, detalle y estrenos.
    */
   constructor(private readonly moviesService: MoviesService) {}
 
@@ -50,6 +53,27 @@ export class MoviesController {
     @Query() query: BillboardQueryDto,
   ): Promise<BillboardResponse> {
     return this.moviesService.getTodayBillboard(query);
+  }
+
+  /**
+   * Próximos estrenos (“Próximamente”) para una ciudad (HU-005).
+   *
+   * Declarada antes de `:id` para que Nest no trate `upcoming` como UUID.
+   *
+   * @param query - `cityId` (fechas pueden variar por ciudad, RN-018).
+   * @returns {Promise<UpcomingMoviesResponse>} Listado ordenado por fecha.
+   */
+  @Get('upcoming')
+  @ApiOperation({
+    summary: 'Próximos estrenos por ciudad',
+    description:
+      'RN-017 solo status UPCOMING · RN-018 fecha por ciudad/complejo · orden por releaseDate.',
+  })
+  @ApiOkResponse({ description: 'Películas de próximos estrenos' })
+  getUpcoming(
+    @Query() query: UpcomingQueryDto,
+  ): Promise<UpcomingMoviesResponse> {
+    return this.moviesService.getUpcoming(query);
   }
 
   /**
@@ -78,7 +102,7 @@ export class MoviesController {
   }
 
   /**
-   * Ficha completa de una película (HU-004).
+   * Ficha completa de una película (HU-004 / HU-005 detalle).
    *
    * @param id - UUID de la película.
    * @param query - `cityId` para filtrar funciones futuras (RN-014).
@@ -88,7 +112,7 @@ export class MoviesController {
   @ApiOperation({
     summary: 'Detalle de película por ciudad',
     description:
-      'RN-014 solo funciones futuras · RN-015 isSoldOut · RN-016 trailerUrl (embed en frontend).',
+      'RN-014 solo funciones futuras · RN-015 isSoldOut · RN-016 trailerUrl · también sirve para próximos estrenos.',
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Ficha completa de la película' })
