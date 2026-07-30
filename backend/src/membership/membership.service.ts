@@ -85,6 +85,16 @@ export class MembershipService {
   }
 
   /**
+   * Busca la membresía de un usuario (login HU-007).
+   *
+   * @param userId - UUID del titular.
+   * @returns {Promise<Membership | null>} Membresía o null.
+   */
+  async findByUserId(userId: string): Promise<Membership | null> {
+    return this.membershipRepo.findOne({ where: { userId } });
+  }
+
+  /**
    * Crea membresía + billetera dentro de una transacción ajena
    * (p. ej. el registro atómico de `AuthService`).
    *

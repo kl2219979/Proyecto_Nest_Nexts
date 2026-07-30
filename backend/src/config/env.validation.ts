@@ -121,4 +121,14 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   CAPTCHA_DEV_TOKEN: string = 'dev-ok';
+
+  /**
+   * Secreto de firma del Access JWT (HU-007).
+   * En producción DEBE ser un valor fuerte y único.
+   * @default dev-jwt-secret-change-me
+   */
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  JWT_SECRET: string = 'dev-jwt-secret-change-me';
 }

@@ -30,7 +30,8 @@
 | HU-004 Detalle de película | **Hecho** | GET /movies/:id + recommendations · RN-014/015/016 · cast/precios |
 | HU-005 Próximos estrenos | **Hecho** | GET /movies/upcoming + POST /notifications/upcoming · RN-017…020 |
 | HU-006 Registro + membresía | **Hecho** | POST /auth/register + /activate · membresía/wallet · RN-021…026 |
-| HU-007 … HU-029 | Pendiente | Ver sección 3 |
+| HU-007 Login JWT | **Hecho** | login/refresh/logout/forgot/reset · RN-027…031 · auditoría |
+| HU-008 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -80,6 +81,13 @@
 - BCrypt (`bcryptjs`), CAPTCHA stub (`CAPTCHA_DEV_TOKEN`), rate-limit (`@nestjs/throttler`).
 - Correo de activación = log con enlace (motor real = HU-015).
 - Guía `docs/features/hu-006-auth-register.md`.
+
+#### HU-007 — Login y autenticación segura
+- Access JWT 15 min + Refresh 7 días (tabla `refresh_tokens`, hash SHA-256); RN-030 invalida refresh previo al login.
+- Endpoints: `POST /auth/login`, `/refresh`, `/logout`, `/forgot-password`, `/reset-password`.
+- RN-027 bloqueo 5 fallos / 15 min; RN-031 solo email verificado; auditoría `login_audits` (IP + UA).
+- `JwtAuthGuard` + `@CurrentUser()` exportados para HUs siguientes; beneficios por nivel en respuesta de login.
+- Guía `docs/features/hu-007-auth-login.md`.
 
 ---
 
@@ -253,6 +261,7 @@ Health OK
 - HU-004 guía: `docs/features/hu-004-movie-detail.md`
 - HU-005 guía: `docs/features/hu-005-upcoming.md`
 - HU-006 guía: `docs/features/hu-006-auth-register.md`
+- HU-007 guía: `docs/features/hu-007-auth-login.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -266,5 +275,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-007 Inicio de Sesión y Autenticación Segura.
+Siguiente: HU-008 Consulta de Perfil y Beneficios de Membresía.
 ```

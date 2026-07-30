@@ -47,6 +47,7 @@ alwaysApply: true
 - HU-004 detalle de película (GET /movies/:id, recommendations)
 - HU-005 próximos estrenos (GET /movies/upcoming, POST /notifications/upcoming)
 - HU-006 registro de usuario + membresía digital
+- HU-007 login JWT + refresh + logout + reset password
 
 ## Siguiente
-- HU-007 inicio de sesión y autenticación segura (JWT)
+- HU-008 consulta de perfil y beneficios de membresía

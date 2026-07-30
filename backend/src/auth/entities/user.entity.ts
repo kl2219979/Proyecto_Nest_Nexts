@@ -78,6 +78,27 @@ export class User {
   @Column({ type: 'boolean', default: false })
   acceptMarketing!: boolean;
 
+  /**
+   * Contador de intentos fallidos de login (HU-007 / RN-027).
+   * Se reinicia a 0 tras un login exitoso.
+   */
+  @Column({ type: 'int', default: 0 })
+  failedLoginAttempts!: number;
+
+  /**
+   * Si es posterior a `now`, la cuenta está bloqueada temporalmente (RN-027).
+   */
+  @Column({ type: 'timestamptz', nullable: true })
+  lockedUntil!: Date | null;
+
+  /** Token de recuperación de contraseña (forgot/reset HU-007). */
+  @Column({ type: 'varchar', length: 64, nullable: true, unique: true })
+  passwordResetToken!: string | null;
+
+  /** Caducidad del token de reset (1 hora). */
+  @Column({ type: 'timestamptz', nullable: true })
+  passwordResetExpiresAt!: Date | null;
+
   @OneToOne(() => UserProfile, (profile) => profile.user)
   profile!: UserProfile;
 
