@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
+import { Invoice } from '../tickets/entities/invoice.entity';
 import { CreateMembershipDto } from './dto/create-membership.dto';
 import { Membership } from './entities/membership.entity';
 import { Wallet } from './entities/wallet.entity';
@@ -28,11 +29,22 @@ export type MembershipResult = {
   createdAt: string;
 };
 
+/** Resumen de compra en el historial de membresía (HU-014). */
+export type MembershipPurchaseItem = {
+  invoiceId: string;
+  orderId: string;
+  number: string;
+  total: number;
+  currency: string;
+  cinemaName: string | null;
+  issuedAt: string;
+};
+
 /**
  * Detalle de membresía para `GET /membership` (HU-008).
  *
  * Incluye beneficios (RN-032), payload del QR (RN-033) y
- * historiales vacíos hasta que existan órdenes (HU-014) y puntos (HU-023).
+ * historial de compras (HU-014). Puntos = HU-023.
  */
 export type MembershipDetailResult = {
   id: string;
@@ -55,8 +67,8 @@ export type MembershipDetailResult = {
   wallet: {
     balance: string;
   };
-  /** Compras; vacío hasta HU-014. */
-  purchaseHistory: [];
+  /** Compras con factura emitida (HU-014). */
+  purchaseHistory: MembershipPurchaseItem[];
   /** Movimientos de puntos; vacío hasta HU-023. */
   pointsHistory: [];
   /** Reservas activas; vacío hasta carrito/tickets (HU-011+). */
@@ -76,6 +88,7 @@ export class MembershipService {
    * @param membershipRepo - Persistencia de membresías.
    * @param walletRepo - Saldo de bonos del socio.
    * @param userRepo - Valida que el usuario exista.
+   * @param invoiceRepo - Historial de compras (facturas HU-014).
    * @param dataSource - Transacciones al crear membresía + wallet.
    */
   constructor(
@@ -85,6 +98,8 @@ export class MembershipService {
     private readonly walletRepo: Repository<Wallet>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Invoice)
+    private readonly invoiceRepo: Repository<Invoice>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -154,6 +169,20 @@ export class MembershipService {
     }
 
     const wallet = await this.walletRepo.findOne({ where: { userId } });
+    const invoices = await this.invoiceRepo.find({
+      where: { userId },
+      order: { issuedAt: 'DESC' },
+      take: 50,
+    });
+    const purchaseHistory: MembershipPurchaseItem[] = invoices.map((inv) => ({
+      invoiceId: inv.id,
+      orderId: inv.orderId,
+      number: inv.number,
+      total: Number(inv.total),
+      currency: inv.currency,
+      cinemaName: inv.cinemaName,
+      issuedAt: inv.issuedAt.toISOString(),
+    }));
 
     return {
       id: membership.id,
@@ -169,7 +198,7 @@ export class MembershipService {
       wallet: {
         balance: wallet?.balance ?? '0.00',
       },
-      purchaseHistory: [],
+      purchaseHistory,
       pointsHistory: [],
       activeReservations: [],
       createdAt: membership.createdAt.toISOString(),

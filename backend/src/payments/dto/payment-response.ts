@@ -69,10 +69,10 @@ export type PaymentResponse = {
   fulfillment: {
     seats: 'LOCKED' | 'SOLD' | 'RELEASED';
     snacksStock: 'RESERVED' | 'DECREMENTED' | 'UNCHANGED';
-    /** HU-014 generará PDF/QR. */
-    tickets: 'PENDING_HU_014' | 'SKIPPED';
-    /** HU-014 generará factura. */
-    invoice: 'PENDING_HU_014' | 'SKIPPED';
+    /** Entradas PDF/QR (HU-014). */
+    tickets: 'GENERATED' | 'PENDING' | 'SKIPPED';
+    /** Factura electrónica (HU-014). */
+    invoice: 'GENERATED' | 'PENDING' | 'SKIPPED';
   };
   confirmedAt: string | null;
   createdAt: string;

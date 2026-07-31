@@ -37,7 +37,8 @@
 | HU-011 Carrito de compras | **Hecho** | CRUD /cart · apply-membership/promo · RN-044…048 |
 | HU-012 Confitería | **Hecho** | GET /snacks · POST/PUT/DELETE /cart/snacks · RN-049…052 |
 | HU-013 Proceso de pago | **Hecho** | POST/GET /payments · webhook HMAC · órdenes · RN-053…056 |
-| HU-014 … HU-029 | Pendiente | Ver sección 3 |
+| HU-014 Entradas + factura | **Hecho** | GET /tickets · GET /invoice/:id · PDF/QR · RN-057…060 |
+| HU-015 … HU-029 | Pendiente | Ver sección 3 |
 
 ### Bitácora de avances
 
@@ -140,9 +141,18 @@
 - Endpoints JWT: `POST /payments`, `GET /payments`, `GET /payments/:id`; webhook `POST /payments/webhook` (HMAC).
 - Medios: CREDIT_CARD / DEBIT_CARD / PSE / NEQUI / DAVIPLATA; tokenización (sin PAN); payload AES-256-GCM.
 - RN-053 confirmación solo por webhook firmado; RN-054 libera sillas si REJECTED; RN-055 auditoría; RN-056 idempotencia.
-- Tras APPROVED: locks → SOLD, `soldSeats++`, stock snacks −, carrito COMPLETED; tickets/factura → HU-014.
+- Tras APPROVED: locks → SOLD, `soldSeats++`, stock snacks −, carrito COMPLETED + tickets/factura (HU-014).
 - `PaymentGatewayService` (Adapter); env `PAYMENT_AES_KEY` / `PAYMENT_WEBHOOK_SECRET`.
 - Guía `docs/features/hu-013-payments.md`.
+
+#### HU-014 — Entradas digitales y factura electrónica
+- Módulo `backend/src/tickets/`: entidades `Ticket`, `Invoice`; `DocumentPdfService` (PDFKit + QR).
+- Tras webhook APPROVED: `fulfillPaidOrder` crea 1 ticket/QR por silla + factura 1:1; flags en `Order`.
+- Endpoints JWT: `GET /tickets`, `GET /tickets/:id`, `GET /tickets/:id/pdf`, `GET /invoice/:id`, `GET /invoice/:id/pdf`.
+- RN-057 QR único; RN-058/060 un solo uso (`VALID`→`USED` en HU-024); RN-059 PDF regenerable.
+- `GET /membership.purchaseHistory` lista facturas emitidas.
+- Guía `docs/features/hu-014-tickets-invoice.md`.
+- Email con adjuntos → HU-015; escaneo puerta → HU-024.
 
 ---
 
@@ -323,6 +333,7 @@ Health OK
 - HU-011 guía: `docs/features/hu-011-cart.md`
 - HU-012 guía: `docs/features/hu-012-snacks.md`
 - HU-013 guía: `docs/features/hu-013-payments.md`
+- HU-014 guía: `docs/features/hu-014-tickets-invoice.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -336,5 +347,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-014 Generación de Entradas Digitales y Factura Electrónica.
+Siguiente: HU-015 Notificaciones Automáticas por Correo Electrónico.
 ```

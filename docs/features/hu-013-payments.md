@@ -13,8 +13,8 @@ GET  /payments/:id          → detalle
 POST /payments/webhook      → APPROVED | REJECTED (HMAC, sin JWT)
 ```
 
-Tickets PDF/QR y factura electrónica = **HU-014** (flags
-`ticketsGenerated` / `invoiceGenerated` quedan en `false`).
+Tickets PDF/QR y factura electrónica = **HU-014** (tras APPROVED:
+`fulfillment.tickets/invoice = GENERATED`).
 
 ## Endpoints
 
@@ -82,7 +82,7 @@ Carrito ACTIVE
       · SeatLock LOCKED → SOLD · soldSeats++
       · Snack stock −
       · Order PAID · Cart COMPLETED
-      · fulfillment.tickets/invoice = PENDING_HU_014
+      · tickets + factura GENERATED (HU-014)
   → (o REJECTED → RELEASE seats, Order FAILED)
 ```
 

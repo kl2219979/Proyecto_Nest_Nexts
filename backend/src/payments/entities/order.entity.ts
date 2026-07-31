@@ -95,13 +95,13 @@ export class Order {
   cinemaName!: string | null;
 
   /**
-   * HU-014 generará entradas/QR; aquí solo marcamos intención.
-   * `false` hasta que exista el módulo de tickets.
+   * Flags de documentos digitales (HU-014).
+   * Pasan a `true` tras `TicketsService.fulfillPaidOrder`.
    */
   @Column({ type: 'boolean', default: false })
   ticketsGenerated!: boolean;
 
-  /** HU-014 generará factura/comprobante. */
+  /** Factura/comprobante emitido (HU-014). */
   @Column({ type: 'boolean', default: false })
   invoiceGenerated!: boolean;
 

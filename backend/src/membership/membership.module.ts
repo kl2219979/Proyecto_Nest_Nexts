@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { User } from '../auth/entities/user.entity';
+import { Invoice } from '../tickets/entities/invoice.entity';
 import { Membership } from './entities/membership.entity';
 import { Wallet } from './entities/wallet.entity';
 import { MembershipController } from './membership.controller';
@@ -15,10 +16,12 @@ import { MembershipService } from './membership.service';
  *
  * `forwardRef(AuthModule)` evita el ciclo Auth ↔ Membership
  * (Auth crea la membresía; Membership protege `GET` con JWT).
+ * `Invoice` (HU-014) alimenta `purchaseHistory` sin importar TicketsModule
+ * (evita ciclo Auth → Membership → Tickets → Auth).
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Membership, Wallet, User]),
+    TypeOrmModule.forFeature([Membership, Wallet, User, Invoice]),
     forwardRef(() => AuthModule),
   ],
   controllers: [MembershipController],

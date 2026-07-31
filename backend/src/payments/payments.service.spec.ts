@@ -11,6 +11,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { CartService } from '../cart/cart.service';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
+import { TicketsService } from '../tickets/tickets.service';
 import { CreatePaymentDto } from './dto/payment.dto';
 import { OrderSnackItem } from './entities/order-snack-item.entity';
 import { OrderTicketItem } from './entities/order-ticket-item.entity';
@@ -37,6 +38,7 @@ describe('PaymentsService', () => {
       updatedAt: new Date(),
     })),
     update: jest.fn(),
+    findOneOrFail: jest.fn(),
   };
   const paymentRepo = {
     create: jest.fn((x: unknown) => x),
@@ -146,6 +148,13 @@ describe('PaymentsService', () => {
     decrementStock: jest.fn().mockResolvedValue(1),
   };
 
+  const ticketsService = {
+    fulfillPaidOrder: jest.fn().mockResolvedValue({
+      tickets: [{ id: 'tkt-1' }],
+      invoice: { id: 'inv-1' },
+    }),
+  };
+
   const gateway = {
     createCharge: jest.fn().mockReturnValue({
       gatewayReference: 'gw_test',
@@ -158,6 +167,14 @@ describe('PaymentsService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     paymentRepo.findOne.mockResolvedValue(null);
+    orderRepo.findOneOrFail = jest.fn().mockImplementation(async () => ({
+      id: 'order-1',
+      ticketsGenerated: true,
+      invoiceGenerated: true,
+      tickets: [],
+      snacks: [],
+      createdAt: new Date(),
+    }));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -176,6 +193,7 @@ describe('PaymentsService', () => {
         { provide: CartService, useValue: cartService },
         { provide: SeatsService, useValue: seatsService },
         { provide: SnacksService, useValue: snacksService },
+        { provide: TicketsService, useValue: ticketsService },
         { provide: PaymentGatewayService, useValue: gateway },
       ],
     }).compile();
@@ -331,7 +349,18 @@ describe('PaymentsService', () => {
       ...payment,
       status: PaymentStatus.APPROVED,
       confirmedAt: new Date(),
-      order: { ...payment.order, status: OrderStatus.PAID },
+      order: {
+        ...payment.order,
+        status: OrderStatus.PAID,
+        ticketsGenerated: true,
+        invoiceGenerated: true,
+      },
+    });
+    orderRepo.findOneOrFail.mockResolvedValue({
+      ...payment.order,
+      status: OrderStatus.PAID,
+      ticketsGenerated: true,
+      invoiceGenerated: true,
     });
 
     const result = await service.handleWebhook(
@@ -345,8 +374,10 @@ describe('PaymentsService', () => {
     expect(result.accepted).toBe(true);
     expect(seatsService.confirmReservationSold).toHaveBeenCalled();
     expect(snacksService.decrementStock).toHaveBeenCalled();
+    expect(ticketsService.fulfillPaidOrder).toHaveBeenCalledWith('order-1');
     expect(cartService.markCompleted).toHaveBeenCalledWith('cart-1', 'user-1');
-    expect(result.payment.fulfillment.tickets).toBe('PENDING_HU_014');
+    expect(result.payment.fulfillment.tickets).toBe('GENERATED');
+    expect(result.payment.fulfillment.invoice).toBe('GENERATED');
   });
 
   it('webhook REJECTED libera sillas (RN-054)', async () => {

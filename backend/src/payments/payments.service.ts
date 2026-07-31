@@ -13,6 +13,7 @@ import { CartService, CART_TTL_MS } from '../cart/cart.service';
 import type { CartResponse } from '../cart/dto/cart-response';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
+import { TicketsService } from '../tickets/tickets.service';
 import {
   OrderView,
   PaymentListResponse,
@@ -37,7 +38,7 @@ import { PaymentGatewayService } from './payment-gateway.service';
  * Proceso de pago seguro (HU-013).
  *
  * Flujo: validar carrito/sillas → orden → cobro cifrado → webhook →
- * sillas SOLD + stock − (tickets/factura = HU-014).
+ * sillas SOLD + stock − + tickets/factura (HU-014).
  *
  * RN-053 no confirmar sin pasarela · RN-054 liberar si falla ·
  * RN-055 auditoría · RN-056 idempotencia / no duplicar reserva.
@@ -55,6 +56,7 @@ export class PaymentsService {
    * @param cartService - Carrito ACTIVE → CHECKOUT → COMPLETED.
    * @param seatsService - Revalidación y venta de sillas.
    * @param snacksService - Descuento de inventario (RN-052).
+   * @param ticketsService - Entradas PDF/QR + factura (HU-014).
    * @param gateway - Adapter AES + firma webhook.
    */
   constructor(
@@ -71,6 +73,7 @@ export class PaymentsService {
     private readonly cartService: CartService,
     private readonly seatsService: SeatsService,
     private readonly snacksService: SnacksService,
+    private readonly ticketsService: TicketsService,
     private readonly gateway: PaymentGatewayService,
   ) {}
 
@@ -334,7 +337,7 @@ export class PaymentsService {
   }
 
   /**
-   * Confirma venta: sillas SOLD, stock −, orden PAID, carrito COMPLETED.
+   * Confirma venta: sillas SOLD, stock −, orden PAID, tickets + factura, carrito COMPLETED.
    */
   private async approvePayment(payment: Payment): Promise<void> {
     const order = payment.order;
@@ -371,15 +374,22 @@ export class PaymentsService {
     await this.paymentRepo.save(payment);
 
     order.status = OrderStatus.PAID;
-    /** Flags para HU-014 (entradas/factura aún no generadas). */
-    order.ticketsGenerated = false;
-    order.invoiceGenerated = false;
     await this.orderRepo.save(order);
+
+    /** HU-014: entradas digitales + factura electrónica. */
+    await this.ticketsService.fulfillPaidOrder(order.id);
+    const refreshedOrder = await this.orderRepo.findOneOrFail({
+      where: { id: order.id },
+      relations: { tickets: true, snacks: true },
+    });
+    payment.order = refreshedOrder;
 
     await this.cartService.markCompleted(payment.cartId, payment.userId);
 
     await this.audit(payment.id, order.id, PaymentAuditEvent.APPROVED, {
       amount: payment.amount,
+      ticketsGenerated: refreshedOrder.ticketsGenerated,
+      invoiceGenerated: refreshedOrder.invoiceGenerated,
     });
   }
 
@@ -528,11 +538,15 @@ export class PaymentsService {
         snacksStock,
         tickets:
           payment.status === PaymentStatus.APPROVED
-            ? 'PENDING_HU_014'
+            ? order.ticketsGenerated
+              ? 'GENERATED'
+              : 'PENDING'
             : 'SKIPPED',
         invoice:
           payment.status === PaymentStatus.APPROVED
-            ? 'PENDING_HU_014'
+            ? order.invoiceGenerated
+              ? 'GENERATED'
+              : 'PENDING'
             : 'SKIPPED',
       },
       confirmedAt: payment.confirmedAt?.toISOString() ?? null,

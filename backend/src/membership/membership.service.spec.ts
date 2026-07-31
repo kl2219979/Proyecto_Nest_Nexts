@@ -6,6 +6,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
+import { Invoice } from '../tickets/entities/invoice.entity';
 import { Membership } from './entities/membership.entity';
 import { Wallet } from './entities/wallet.entity';
 import { MembershipLevel, MembershipStatus } from './enums/membership.enums';
@@ -22,6 +23,9 @@ describe('MembershipService', () => {
   };
   const userRepo = {
     findOne: jest.fn(),
+  };
+  const invoiceRepo = {
+    find: jest.fn().mockResolvedValue([]),
   };
   const manager = {
     getRepository: jest.fn(() => membershipRepo),
@@ -53,6 +57,7 @@ describe('MembershipService', () => {
     membershipRepo.findOne.mockResolvedValue(null);
     walletRepo.findOne.mockResolvedValue({ balance: '0.00' });
     userRepo.findOne.mockResolvedValue({ id: 'user-1' });
+    invoiceRepo.find.mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -60,6 +65,7 @@ describe('MembershipService', () => {
         { provide: getRepositoryToken(Membership), useValue: membershipRepo },
         { provide: getRepositoryToken(Wallet), useValue: walletRepo },
         { provide: getRepositoryToken(User), useValue: userRepo },
+        { provide: getRepositoryToken(Invoice), useValue: invoiceRepo },
         { provide: DataSource, useValue: dataSource },
       ],
     }).compile();

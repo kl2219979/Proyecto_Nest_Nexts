@@ -54,6 +54,7 @@ alwaysApply: true
 - HU-011 administración del carrito (CRUD, membresía, promo demo, TTL 10 min)
 - HU-012 confitería (GET /snacks, POST/PUT/DELETE /cart/snacks, stock RN-049/052)
 - HU-013 proceso de pago seguro (POST/GET /payments, webhook HMAC, órdenes, RN-053…056)
+- HU-014 entradas digitales + factura (GET /tickets, GET /invoice/:id, PDF/QR, RN-057…060)
 
 ## Siguiente
-- HU-014 generación de entradas digitales y factura electrónica
+- HU-015 notificaciones automáticas por correo electrónico

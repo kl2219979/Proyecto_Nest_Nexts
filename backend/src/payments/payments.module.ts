@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { CartModule } from '../cart/cart.module';
 import { SeatsModule } from '../seats/seats.module';
 import { SnacksModule } from '../snacks/snacks.module';
+import { TicketsModule } from '../tickets/tickets.module';
 import { OrderSnackItem } from './entities/order-snack-item.entity';
 import { OrderTicketItem } from './entities/order-ticket-item.entity';
 import { Order } from './entities/order.entity';
@@ -19,7 +20,7 @@ import { PaymentsService } from './payments.service';
  * - `POST/GET /payments` · `GET /payments/:id` (JWT)
  * - `POST /payments/webhook` (firma HMAC)
  *
- * Tickets PDF/QR y factura = HU-014 (flags en Order).
+ * Tras APPROVED delega entradas/factura a `TicketsModule` (HU-014).
  */
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PaymentsService } from './payments.service';
     CartModule,
     SeatsModule,
     SnacksModule,
+    TicketsModule,
     TypeOrmModule.forFeature([
       Order,
       OrderTicketItem,

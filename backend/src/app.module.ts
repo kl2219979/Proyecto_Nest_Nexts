@@ -16,6 +16,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { ProfileModule } from './profile/profile.module';
 import { SeatsModule } from './seats/seats.module';
 import { SnacksModule } from './snacks/snacks.module';
+import { TicketsModule } from './tickets/tickets.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -114,6 +115,8 @@ import { SnacksModule } from './snacks/snacks.module';
     SnacksModule,
     /** Carrito de compras entradas + snacks (HU-011 / HU-012). */
     CartModule,
+    /** Entradas digitales + factura (HU-014); también usado por Payments. */
+    TicketsModule,
     /** Pagos seguros + órdenes (HU-013). */
     PaymentsModule,
   ],
