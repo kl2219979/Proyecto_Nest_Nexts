@@ -25,6 +25,7 @@ import { TransferModule } from './transfer/transfer.module';
 import { GiftcardsModule } from './giftcards/giftcards.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { CineflashModule } from './cineflash/cineflash.module';
+import { AiModule } from './ai/ai.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -142,6 +143,8 @@ import { CineflashModule } from './cineflash/cineflash.module';
     PromotionsModule,
     /** Cine Flash automático (HU-019). */
     CineflashModule,
+    /** Chatbot IA de recomendaciones (HU-021). */
+    AiModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */
     AdminModule,
   ],

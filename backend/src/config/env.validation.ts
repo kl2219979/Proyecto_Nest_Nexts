@@ -156,4 +156,12 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   PAYMENT_WEBHOOK_SECRET: string = 'dev-payment-webhook-secret';
+
+  /**
+   * API key de OpenAI para el chatbot (HU-021). Opcional:
+   * sin ella el adaptador usa stub local determinista.
+   */
+  @IsOptional()
+  @IsString()
+  OPENAI_API_KEY?: string;
 }

@@ -47,7 +47,8 @@
 | HU-018 Bonos de regalo | **Hecho** | POST/GET /giftcards · redeem · webhook · cart apply · RN-076…079 |
 | HU-023 Fidelización / puntos | **Hecho** | GET/POST /points · levels · cart apply · earn/redeem · RN-099…101 |
 | HU-019 Cine Flash | **Hecho** | Cron 5 min · POST /cineflash/process · GET /movies/cineflash · RN-080…086 |
-| HU-021 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-021) |
+| HU-021 Chatbot IA | **Hecho** | POST /ai/chat · POST /ai/history · Adapter OpenAI stub · RN-091…095 |
+| HU-022 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-022) |
 
 ### Bitácora de avances
 
@@ -246,6 +247,16 @@
 - Guía `docs/features/hu-019-cineflash.md`.
 - Chatbot IA → HU-021.
 
+#### HU-021 — Chatbot Inteligente para Recomendación de Películas
+- Módulo `backend/src/ai/`: `AiService` + `OpenAiGatewayService` (Adapter) + entidades `chat_sessions` / `chat_messages`.
+- Endpoints: `POST /ai/chat`, `POST /ai/history` (JWT opcional; visitante o autenticado).
+- RN-091 solo cartelera de `cityId` · RN-092 prioriza cupo · RN-093 filtro etario · RN-094 `latencyMs` · RN-095 escalado humano.
+- Tarjetas: poster, trailer, sinopsis, rating, duración, horarios, formatos, precio, `buyPath` (botón Comprar = frontend).
+- FAQ: hoy, niños, después de hora, promos (HU-026), VIP, membresía (HU-008).
+- Stub NLU local; `OPENAI_API_KEY` opcional para sustituir el adaptador.
+- Guía `docs/features/hu-021-ai-chatbot.md`.
+- Motor personalizado por historial → HU-022.
+
 ---
 
 ## 1. Qué es este backend en una frase
@@ -435,6 +446,7 @@ Health OK
 - HU-018 guía: `docs/features/hu-018-giftcards.md`
 - HU-023 guía: `docs/features/hu-023-loyalty.md`
 - HU-019 guía: `docs/features/hu-019-cineflash.md`
+- HU-021 guía: `docs/features/hu-021-ai-chatbot.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -448,5 +460,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-021 Chatbot Inteligente para Recomendación de Películas.
+Siguiente: HU-022 Motor de Recomendaciones Personalizadas.
 ```
