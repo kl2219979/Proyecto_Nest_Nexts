@@ -31,6 +31,11 @@ export type TicketView = {
   language: string;
   buyerName: string;
   /**
+   * Veces que esta entrada ya fue cedida (HU-017 / RN-072).
+   * `0` permite transferir; `≥1` bloquea una segunda cesión.
+   */
+  transferCount: number;
+  /**
    * Payload único del QR (RN-057).
    * El PDF también lo embebe como imagen; el front puede re-renderizarlo.
    */

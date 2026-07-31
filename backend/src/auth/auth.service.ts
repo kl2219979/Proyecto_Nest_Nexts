@@ -6,6 +6,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
@@ -21,6 +22,7 @@ import {
   MembershipService,
 } from '../membership/membership.service';
 import { EmailService } from '../notifications/email.service';
+import { TransferService } from '../transfer/transfer.service';
 import { CaptchaService } from './captcha/captcha.service';
 import { ActivateAccountDto } from './dto/activate-account.dto';
 import { ClientContext, LoginDto } from './dto/login.dto';
@@ -154,6 +156,10 @@ export class AuthService {
     private readonly dataSource: DataSource,
     @Inject(forwardRef(() => EmailService))
     private readonly emailService: EmailService,
+    /** HU-017: enlaza cesiones PENDING cuando el invitado activa la cuenta. */
+    @Optional()
+    @Inject(forwardRef(() => TransferService))
+    private readonly transferService?: TransferService,
   ) {}
 
   /**
@@ -313,6 +319,15 @@ export class AuthService {
     user.activationToken = null;
     user.activationTokenExpiresAt = null;
     await this.userRepo.save(user);
+
+    if (this.transferService) {
+      void this.transferService
+        .linkPendingTransfersByEmail(user.id, user.email)
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Fallo enlace transferencias pendientes: ${msg}`);
+        });
+    }
 
     void this.emailService
       .sendAccountActivated(user.id, user.email)

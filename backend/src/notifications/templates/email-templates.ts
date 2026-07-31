@@ -238,6 +238,42 @@ ${moneyNote}
 ${link(String(ctx.ticketsUrl ?? '#'), 'Ver mis entradas')}`;
       }
 
+      case EmailTemplate.TICKET_TRANSFER: {
+        const movie = String(ctx.movieTitle ?? 'tu película');
+        const variant = String(ctx.variant ?? 'request');
+        const seatCount = String(ctx.seatCount ?? '1');
+        const starts = String(ctx.startsAt ?? '');
+        if (variant === 'invite') {
+          return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p><strong>${this.escape(String(ctx.fromEmail ?? 'Un usuario Multicine'))}</strong> quiere transferirte ${this.escape(seatCount)} entrada(s) de <strong>${this.escape(movie)}</strong>.</p>
+<p><strong>Función:</strong> ${this.escape(starts)}</p>
+<p>Aún no tienes cuenta. Regístrate con este mismo correo y, tras activarla, acepta la cesión.</p>
+${link(String(ctx.registerUrl ?? '#'), 'Crear mi cuenta')}
+${link(String(ctx.acceptUrl ?? '#'), 'Ya tengo cuenta — aceptar')}`;
+        }
+        if (variant === 'accepted_recipient') {
+          return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p>Aceptaste la transferencia de <strong>${this.escape(movie)}</strong>. Ya tienes ${this.escape(seatCount)} entrada(s) con QR nuevo.</p>
+<p><strong>Función:</strong> ${this.escape(starts)}</p>
+${link(String(ctx.ticketsUrl ?? '#'), 'Ver mis entradas')}`;
+        }
+        if (variant === 'accepted_sender') {
+          return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p><strong>${this.escape(String(ctx.toName ?? 'El destinatario'))}</strong> aceptó tu cesión de <strong>${this.escape(movie)}</strong>. Tus QR anteriores quedaron anulados.</p>
+<p><strong>Función:</strong> ${this.escape(starts)}</p>`;
+        }
+        if (variant === 'sender_notice') {
+          return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p>Solicitaste transferir ${this.escape(seatCount)} entrada(s) de <strong>${this.escape(movie)}</strong> a <strong>${this.escape(String(ctx.toName ?? ''))}</strong> (${this.escape(String(ctx.toEmail ?? ''))}).</p>
+<p>El QR actual sigue vigente hasta que el destinatario acepte (RN-073).</p>`;
+        }
+        return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p><strong>${this.escape(String(ctx.fromEmail ?? 'Un usuario Multicine'))}</strong> te transfiere ${this.escape(seatCount)} entrada(s) de <strong>${this.escape(movie)}</strong>.</p>
+<p><strong>Función:</strong> ${this.escape(starts)}</p>
+<p>Debes aceptar para recibir el nuevo QR (RN-073). El QR anterior se anulará al aceptar.</p>
+${link(String(ctx.acceptUrl ?? '#'), 'Aceptar transferencia')}`;
+      }
+
       default:
         return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
 <p>${this.escape(String(ctx.message ?? 'Tienes una nueva notificación de Multicine.'))}</p>`;

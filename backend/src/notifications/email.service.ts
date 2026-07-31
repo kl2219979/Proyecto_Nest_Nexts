@@ -394,6 +394,146 @@ export class EmailService {
   }
 
   /**
+   * Solicitud de cesión a un usuario ya registrado (HU-017).
+   */
+  async sendTicketTransferRequest(params: {
+    userId: string;
+    toEmail: string;
+    toName: string;
+    fromEmail: string;
+    movieTitle: string;
+    startsAt: string;
+    transferId: string;
+    acceptToken: string;
+    seatCount: number;
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.toEmail,
+      template: EmailTemplate.TICKET_TRANSFER,
+      payload: {
+        variant: 'request',
+        recipientName: params.toName,
+        fromEmail: params.fromEmail,
+        movieTitle: params.movieTitle,
+        startsAt: params.startsAt,
+        seatCount: params.seatCount,
+        transferId: params.transferId,
+        acceptUrl: `${base}/api/docs#/Tickets%20%2F%20Transfer/TicketsTransferController_accept`,
+        acceptToken: params.acceptToken,
+        ticketsUrl: `${base}/api/v1/tickets`,
+      },
+      relatedEntityType: 'TICKET_TRANSFER_REQUEST',
+      relatedEntityId: params.transferId,
+    });
+  }
+
+  /**
+   * Invitación a registrarse para recibir entradas (HU-017).
+   */
+  async sendTicketTransferInvite(params: {
+    toEmail: string;
+    toName: string;
+    fromEmail: string;
+    movieTitle: string;
+    startsAt: string;
+    transferId: string;
+    acceptToken: string;
+    seatCount: number;
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: null,
+      toEmail: params.toEmail,
+      template: EmailTemplate.TICKET_TRANSFER,
+      payload: {
+        variant: 'invite',
+        recipientName: params.toName,
+        fromEmail: params.fromEmail,
+        movieTitle: params.movieTitle,
+        startsAt: params.startsAt,
+        seatCount: params.seatCount,
+        transferId: params.transferId,
+        registerUrl: `${base}/api/docs`,
+        acceptUrl: `${base}/api/v1/tickets/transfer/accept`,
+        acceptToken: params.acceptToken,
+      },
+      relatedEntityType: 'TICKET_TRANSFER_INVITE',
+      relatedEntityId: params.transferId,
+    });
+  }
+
+  /**
+   * Acuse al emisor de que la cesión quedó PENDING (HU-017).
+   */
+  async sendTicketTransferNoticeToSender(params: {
+    userId: string;
+    email: string;
+    toEmail: string;
+    toName: string;
+    movieTitle: string;
+    startsAt: string;
+    transferId: string;
+    seatCount: number;
+    invited: boolean;
+  }): Promise<EmailNotification> {
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.email,
+      template: EmailTemplate.TICKET_TRANSFER,
+      payload: {
+        variant: 'sender_notice',
+        toEmail: params.toEmail,
+        toName: params.toName,
+        movieTitle: params.movieTitle,
+        startsAt: params.startsAt,
+        seatCount: params.seatCount,
+        transferId: params.transferId,
+        invited: params.invited,
+      },
+      relatedEntityType: 'TICKET_TRANSFER_SENDER',
+      relatedEntityId: params.transferId,
+    });
+  }
+
+  /**
+   * Confirmación tras aceptar la cesión (emisor o destinatario) (HU-017).
+   */
+  async sendTicketTransferAccepted(params: {
+    userId: string;
+    toEmail: string;
+    toName: string;
+    movieTitle: string;
+    startsAt: string;
+    transferId: string;
+    seatCount: number;
+    role: 'sender' | 'recipient';
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.toEmail,
+      template: EmailTemplate.TICKET_TRANSFER,
+      payload: {
+        variant:
+          params.role === 'recipient'
+            ? 'accepted_recipient'
+            : 'accepted_sender',
+        recipientName: params.role === 'recipient' ? params.toName : undefined,
+        toName: params.toName,
+        movieTitle: params.movieTitle,
+        startsAt: params.startsAt,
+        seatCount: params.seatCount,
+        transferId: params.transferId,
+        ticketsUrl: `${base}/api/v1/tickets`,
+      },
+      relatedEntityType: 'TICKET_TRANSFER_ACCEPTED',
+      relatedEntityId: params.transferId,
+    });
+  }
+
+  /**
    * Pago rechazado.
    */
   async sendPaymentRejected(

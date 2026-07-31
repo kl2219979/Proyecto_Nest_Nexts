@@ -43,7 +43,8 @@
 | HU-020 Panel administrativo | **Hecho** | /api/admin/* · RBAC · CRUD catálogos · auditoría · reportes |
 | HU-026 Promociones y cupones | **Hecho** | CRUD /promotions · RN-105…107 · carrito + precios · redenciones |
 | HU-016 Cambio de función | **Hecho** | GET /orders · available-functions · PUT reschedule · regenerate · RN-065…070 |
-| HU-017 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-017) |
+| HU-017 Transferencia entradas | **Hecho** | POST/GET /tickets/transfer · accept · invite · RN-071…075 |
+| HU-018 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-018) |
 
 ### Bitácora de avances
 
@@ -203,6 +204,16 @@
 - Ajuste económico: crédito/débito de billetera; correo `FUNCTION_CHANGED` (HU-015).
 - Guía `docs/features/hu-016-reschedule.md`.
 - Transferencia de entradas → HU-017.
+
+#### HU-017 — Transferencia de Entradas a Otro Usuario
+- Módulo `backend/src/transfer/`: `TransferService` + `TransferController` + entidad `ticket_transfers`.
+- Endpoints JWT: `POST /tickets/transfer`, `GET /tickets/transfer`, `POST /tickets/transfer/accept`.
+- Flujo: solicitar (nombre/email/documento) → PENDING → aceptar → anular QR → emitir nuevos al destinatario.
+- Sin cuenta: correo de invitación a registrarse; tras `POST /auth/activate` se enlaza `toUserId` (sigue haciendo falta aceptar).
+- RN-071 ventana 1 h · RN-072 una sola cesión (`Ticket.transferCount`) · RN-073 aceptación · RN-074 invalidar QR · RN-075 auditoría.
+- Correo `TICKET_TRANSFER` (request / invite / accepted); orden/factura del comprador original intactas.
+- Guía `docs/features/hu-017-transfer.md`.
+- Giftcards → HU-018.
 
 ---
 
@@ -389,6 +400,7 @@ Health OK
 - HU-020 guía: `docs/features/hu-020-admin.md`
 - HU-026 guía: `docs/features/hu-026-promotions.md`
 - HU-016 guía: `docs/features/hu-016-reschedule.md`
+- HU-017 guía: `docs/features/hu-017-transfer.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -402,5 +414,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-017 Transferencia de Entradas a Otro Usuario.
+Siguiente: HU-018 Compra y Envío de Bonos de Regalo Digitales.
 ```

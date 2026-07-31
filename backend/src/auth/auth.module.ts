@@ -7,6 +7,7 @@ import { Cinema } from '../locations/entities/cinema.entity';
 import { City } from '../locations/entities/city.entity';
 import { MembershipModule } from '../membership/membership.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { TransferModule } from '../transfer/transfer.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CaptchaService } from './captcha/captcha.service';
@@ -15,15 +16,16 @@ import { NotificationPreference } from './entities/notification-preference.entit
 import { RefreshToken } from './entities/refresh-token.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { User } from './entities/user.entity';
+import { RolesGuard } from './guards/roles.guard';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import { OptionalJwtAuthGuard } from './jwt/optional-jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
 
 /**
  * Módulo de autenticación (HU-006 registro + HU-007 sesión JWT + HU-020 RBAC).
  *
  * Exporta `JwtAuthGuard` / `RolesGuard` / `AuthService` para rutas protegidas.
+ * Importa `TransferModule` (forwardRef) para enlazar cesiones tras activar (HU-017).
  */
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { RolesGuard } from './guards/roles.guard';
     ]),
     forwardRef(() => MembershipModule),
     forwardRef(() => NotificationsModule),
+    forwardRef(() => TransferModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     /**
      * JwtModule asíncrono: lee `JWT_SECRET` del entorno.

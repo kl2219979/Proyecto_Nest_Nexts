@@ -60,6 +60,7 @@ alwaysApply: true
 - HU-020 panel administrativo (/api/admin/*, RBAC, auditoría, reportes)
 - HU-026 promociones y cupones (CRUD, RN-105…107, carrito + precios)
 - HU-016 cambio de función (GET /orders, available-functions, PUT reschedule, regenerate, RN-065…070)
+- HU-017 transferencia de entradas (POST/GET /tickets/transfer, accept, invite, RN-071…075)
 
 ## Siguiente
-- HU-017 Transferencia de Entradas a Otro Usuario
+- HU-018 Compra y Envío de Bonos de Regalo Digitales

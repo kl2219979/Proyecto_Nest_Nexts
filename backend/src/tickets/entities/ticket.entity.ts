@@ -107,9 +107,17 @@ export class Ticket {
   @Column({ type: 'varchar', length: 40 })
   language!: string;
 
-  /** Nombre completo del comprador al momento de emitir. */
+  /** Nombre completo del comprador/titular al momento de emitir. */
   @Column({ type: 'varchar', length: 220 })
   buyerName!: string;
+
+  /**
+   * Veces que esta línea de entrada ya fue cedida (HU-017 / RN-072).
+   * `0` = aún transferible; `≥1` = no se puede volver a transferir.
+   * Al emitir la entrada del nuevo titular se copia `source + 1`.
+   */
+  @Column({ type: 'int', default: 0 })
+  transferCount!: number;
 
   /** Momento de ingreso a sala (HU-024 / RN-103). */
   @Column({ type: 'timestamptz', nullable: true })

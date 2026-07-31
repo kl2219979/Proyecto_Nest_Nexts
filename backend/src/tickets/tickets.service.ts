@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { UserProfile } from '../auth/entities/user-profile.entity';
 import { Order } from '../payments/entities/order.entity';
@@ -116,6 +116,7 @@ export class TicketsService {
           format: line.format,
           language: line.language,
           buyerName,
+          transferCount: 0,
           usedAt: null,
           validatedByUserId: null,
         }),
@@ -448,6 +449,72 @@ export class TicketsService {
   }
 
   /**
+   * Anula entradas VALID por ID (HU-017 / RN-074).
+   *
+   * A diferencia de `cancelValidTicketsForOrder`, opera sobre un subconjunto
+   * (una o varias sillas) sin exigir anular toda la orden.
+   *
+   * @param ticketIds - UUIDs de entradas a invalidar.
+   * @returns IDs efectivamente anulados.
+   */
+  async cancelTicketsByIds(ticketIds: string[]): Promise<string[]> {
+    if (ticketIds.length === 0) return [];
+    const tickets = await this.ticketRepo.find({
+      where: { id: In(ticketIds), status: TicketStatus.VALID },
+    });
+    for (const ticket of tickets) {
+      ticket.status = TicketStatus.CANCELLED;
+    }
+    await this.ticketRepo.save(tickets);
+    return tickets.map((t) => t.id);
+  }
+
+  /**
+   * Emite nuevas entradas VALID para el destinatario de una cesión (HU-017).
+   *
+   * Conserva `orderId` / `orderTicketItemId` y el snapshot de función/silla.
+   * El QR y el titular cambian; `transferCount` = origen + 1 (RN-072).
+   * La factura y el comprador de la orden no se reescriben.
+   *
+   * @param sourceTickets - Entradas origen (ya anuladas o a punto de anularse).
+   * @param toUserId - Nuevo titular.
+   * @param buyerName - Nombre del nuevo asistente (snapshot PDF).
+   * @returns Entradas nuevas con QR fresco.
+   */
+  async emitTicketsForTransfer(
+    sourceTickets: Ticket[],
+    toUserId: string,
+    buyerName: string,
+  ): Promise<Ticket[]> {
+    const created: Ticket[] = [];
+    for (const source of sourceTickets) {
+      created.push(
+        this.ticketRepo.create({
+          orderId: source.orderId,
+          orderTicketItemId: source.orderTicketItemId,
+          userId: toUserId,
+          code: await this.generateUniqueTicketCode(),
+          qrPayload: await this.generateUniqueQrPayload(),
+          status: TicketStatus.VALID,
+          ticketType: source.ticketType,
+          movieTitle: source.movieTitle,
+          startsAt: source.startsAt,
+          cinemaName: source.cinemaName,
+          roomName: source.roomName,
+          seatLabel: source.seatLabel,
+          format: source.format,
+          language: source.language,
+          buyerName,
+          transferCount: source.transferCount + 1,
+          usedAt: null,
+          validatedByUserId: null,
+        }),
+      );
+    }
+    return this.ticketRepo.save(created);
+  }
+
+  /**
    * Emite nuevas entradas VALID a partir de las líneas actuales de la orden.
    *
    * `POST /tickets/regenerate` (HU-016). No toca la factura original
@@ -513,6 +580,7 @@ export class TicketsService {
           format: line.format,
           language: line.language,
           buyerName,
+          transferCount: 0,
           usedAt: null,
           validatedByUserId: null,
         }),
@@ -683,6 +751,7 @@ export class TicketsService {
       format: ticket.format,
       language: ticket.language,
       buyerName: ticket.buyerName,
+      transferCount: ticket.transferCount ?? 0,
       qr: {
         payload: ticket.qrPayload,
         singleUse: true,
