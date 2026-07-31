@@ -27,7 +27,7 @@ import { LoginAudit } from './entities/login-audit.entity';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { User } from './entities/user.entity';
-import { DocumentType } from './enums/user.enums';
+import { DocumentType, UserRole } from './enums/user.enums';
 import { RegisterDto } from './dto/register.dto';
 
 describe('AuthService', () => {
@@ -270,6 +270,7 @@ describe('AuthService', () => {
       isActive: true,
       failedLoginAttempts: 0,
       lockedUntil: null,
+      role: UserRole.CUSTOMER,
     });
 
     const result = await service.login(
@@ -302,6 +303,7 @@ describe('AuthService', () => {
       isActive: false,
       failedLoginAttempts: 0,
       lockedUntil: null,
+      role: UserRole.CUSTOMER,
     });
 
     await expect(
@@ -323,6 +325,7 @@ describe('AuthService', () => {
       isActive: true,
       failedLoginAttempts: 0,
       lockedUntil: new Date(Date.now() + 60_000),
+      role: UserRole.CUSTOMER,
     });
 
     await expect(
@@ -344,6 +347,7 @@ describe('AuthService', () => {
       isActive: true,
       failedLoginAttempts: 2,
       lockedUntil: null,
+      role: UserRole.CUSTOMER,
     });
 
     await expect(
@@ -369,6 +373,7 @@ describe('AuthService', () => {
       isActive: true,
       failedLoginAttempts: 4,
       lockedUntil: null as Date | null,
+      role: UserRole.CUSTOMER,
     };
     userRepo.findOne.mockResolvedValue(user);
 

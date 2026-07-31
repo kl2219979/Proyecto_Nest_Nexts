@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
+import { UserRole } from '../enums/user.enums';
 import { JwtPayload } from './jwt-payload';
 
 /**
@@ -13,6 +14,8 @@ import { JwtPayload } from './jwt-payload';
 export type AuthUser = {
   userId: string;
   email: string;
+  /** Rol actual (HU-020); se revalida desde DB por si cambió tras emitir el JWT. */
+  role: UserRole;
 };
 
 /**
@@ -57,6 +60,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user || !user.isActive || !user.isEmailVerified) {
       throw new UnauthorizedException('Sesión inválida');
     }
-    return { userId: user.id, email: user.email };
+    return { userId: user.id, email: user.email, role: user.role };
   }
 }

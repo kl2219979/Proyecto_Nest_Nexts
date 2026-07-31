@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { Logger, RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -31,10 +31,13 @@ async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
 
   /**
-   * Prefijo global de la API.
+   * Prefijo global de la API pública.
+   * El backoffice (HU-020) vive en `/api/admin/*` y se excluye del `v1`.
    * Ejemplo: un `@Controller('health')` queda en `/api/v1/health`.
    */
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', {
+    exclude: [{ path: 'api/admin/{*path}', method: RequestMethod.ALL }],
+  });
 
   /**
    * ValidationPipe global:
@@ -70,11 +73,13 @@ async function bootstrap(): Promise<void> {
 
   /**
    * Metadatos de Swagger/OpenAPI.
-   * `addBearerAuth()` prepara el candado JWT para historias futuras (login).
+   * `addBearerAuth()` prepara el candado JWT (login + admin).
    */
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Multicine API')
-    .setDescription('API REST de la Plataforma Web Multicine')
+    .setDescription(
+      'API REST de la Plataforma Web Multicine (`/api/v1` + backoffice `/api/admin`)',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -95,6 +100,7 @@ async function bootstrap(): Promise<void> {
   await app.listen(port);
 
   logger.log(`API listening on http://localhost:${port}/api/v1`);
+  logger.log(`Admin API on http://localhost:${port}/api/admin`);
   logger.log(`Swagger available at http://localhost:${port}/api/docs`);
 }
 

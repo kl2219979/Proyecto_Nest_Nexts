@@ -25,6 +25,9 @@ import {
 } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/enums/user.enums';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 import type { AuthUser } from '../auth/jwt/jwt.strategy';
 import {
@@ -40,7 +43,7 @@ import { TicketsService } from './tickets.service';
  *
  * Prefijo global `/api/v1`:
  * - `GET /tickets` — Mis compras / entradas
- * - `POST /tickets/validate` — Escaneo QR (colaborador)
+ * - `POST /tickets/validate` — Escaneo QR (STAFF+, HU-020 / RN-088)
  * - `GET /tickets/:id` — detalle
  * - `GET /tickets/:id/pdf` — descarga PDF (RN-059)
  */
@@ -73,11 +76,10 @@ export class TicketsController {
   }
 
   /**
-   * Escaneo de QR en puerta (HU-024 / RN-102…104).
+   * Escaneo de QR en puerta (HU-024 / RN-102…104 + HU-020 RBAC).
    *
    * Declarado antes de `:id` para no colisionar con rutas dinámicas.
-   * El colaborador autenticado (JWT) queda registrado en `validatedByUserId`.
-   * Roles STAFF formales llegan con el panel admin (HU-020).
+   * Requiere rol STAFF o superior (RN-088).
    *
    * @param user - JWT del colaborador.
    * @param dto - Payload leído del QR.
@@ -85,11 +87,13 @@ export class TicketsController {
    */
   @Post('validate')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.STAFF)
   @ApiOperation({
     summary: 'Validar QR de entrada en puerta',
     description:
       'Comprueba existencia, compra pagada y estado VALID; marca UTILIZADA (RN-102). ' +
-      'Registra fecha/hora (RN-103) y colaborador (RN-104). Rechaza reuso con alerta.',
+      'Registra fecha/hora (RN-103) y colaborador (RN-104). Requiere rol STAFF+ (HU-020).',
   })
   @ApiOkResponse({ description: 'Ingreso autorizado; entrada marcada USED' })
   @ApiNotFoundResponse({ description: 'QR desconocido' })
@@ -97,6 +101,7 @@ export class TicketsController {
     description: 'QR ya usado, anulado o compra no pagada',
   })
   @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  @ApiForbiddenResponse({ description: 'Rol insuficiente (se requiere STAFF+)' })
   validate(
     @CurrentUser() user: AuthUser,
     @Body() dto: ValidateTicketDto,

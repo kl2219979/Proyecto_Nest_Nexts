@@ -6,16 +6,17 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { DocumentType } from '../enums/user.enums';
+import { DocumentType, UserRole } from '../enums/user.enums';
 import { UserProfile } from './user-profile.entity';
 import { NotificationPreference } from './notification-preference.entity';
 
 /**
- * Cuenta de usuario del portal (HU-006).
+ * Cuenta de usuario del portal (HU-006) + rol RBAC (HU-020).
  *
  * RN-021: `email` único.
  * RN-024: `isEmailVerified = false` hasta confirmar el enlace de activación;
  * mientras tanto la cuenta no puede comprar (compras = HUs posteriores).
+ * RN-088: `role` controla acceso al backoffice y escaneo en puerta.
  *
  * La contraseña se guarda solo como hash BCrypt (`passwordHash`).
  */
@@ -28,6 +29,17 @@ export class User {
   /** Correo único (normalizado a minúsculas al registrar). */
   @Column({ type: 'varchar', length: 255, unique: true })
   email!: string;
+
+  /**
+   * Rol RBAC (HU-020). Por defecto CUSTOMER al registrarse en el portal.
+   * Solo SUPER_ADMIN (o seed) asigna STAFF/ADMIN.
+   */
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.CUSTOMER,
+  })
+  role!: UserRole;
 
   /** Hash BCrypt de la contraseña (nunca texto plano). */
   @Column({ type: 'varchar', length: 255 })

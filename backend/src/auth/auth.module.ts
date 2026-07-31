@@ -18,11 +18,12 @@ import { User } from './entities/user.entity';
 import { JwtAuthGuard } from './jwt/jwt-auth.guard';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import { OptionalJwtAuthGuard } from './jwt/optional-jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 /**
- * Módulo de autenticación (HU-006 registro + HU-007 sesión JWT).
+ * Módulo de autenticación (HU-006 registro + HU-007 sesión JWT + HU-020 RBAC).
  *
- * Exporta `JwtAuthGuard` / `AuthService` para rutas protegidas (HU-008+).
+ * Exporta `JwtAuthGuard` / `RolesGuard` / `AuthService` para rutas protegidas.
  */
 @Module({
   imports: [
@@ -58,7 +59,21 @@ import { OptionalJwtAuthGuard } from './jwt/optional-jwt-auth.guard';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, CaptchaService, JwtStrategy, JwtAuthGuard, OptionalJwtAuthGuard],
-  exports: [AuthService, JwtModule, PassportModule, JwtAuthGuard, OptionalJwtAuthGuard],
+  providers: [
+    AuthService,
+    CaptchaService,
+    JwtStrategy,
+    JwtAuthGuard,
+    OptionalJwtAuthGuard,
+    RolesGuard,
+  ],
+  exports: [
+    AuthService,
+    JwtModule,
+    PassportModule,
+    JwtAuthGuard,
+    OptionalJwtAuthGuard,
+    RolesGuard,
+  ],
 })
 export class AuthModule {}

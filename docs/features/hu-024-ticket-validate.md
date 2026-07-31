@@ -20,13 +20,12 @@ Prefijo global: `/api/v1`
 
 | Método | Ruta | Auth | Descripción |
 |---|---|---|---|
-| `POST` | `/tickets/validate` | JWT (colaborador) | Escaneo en puerta |
+| `POST` | `/tickets/validate` | JWT **STAFF+** | Escaneo en puerta |
 
 Swagger: http://localhost:3000/api/docs → tag **Tickets**
 
-> Roles STAFF formales llegan con el panel admin (**HU-020**).
-> Hoy cualquier usuario autenticado puede invocar el endpoint;
-> el JWT queda registrado como colaborador del escaneo.
+> Roles formales: `STAFF` / `ADMIN` / `SUPER_ADMIN` (HU-020 / RN-088).
+> Un `CUSTOMER` recibe **403** al invocar el endpoint.
 
 ## Reglas de negocio
 

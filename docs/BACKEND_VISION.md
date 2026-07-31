@@ -39,8 +39,9 @@
 | HU-013 Proceso de pago | **Hecho** | POST/GET /payments · webhook HMAC · órdenes · RN-053…056 |
 | HU-014 Entradas + factura | **Hecho** | GET /tickets · GET /invoice/:id · PDF/QR · RN-057…060 |
 | HU-015 Notificaciones email | **Hecho** | Motor correo + historial + prefs · RN-061…064 · cron recordatorios |
-| HU-024 Escaneo QR puerta | **Hecho** | POST /tickets/validate · VALID→USED · RN-102…104 |
-| HU-016 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-020) |
+| HU-024 Escaneo QR puerta | **Hecho** | POST /tickets/validate · VALID→USED · RN-102…104 · STAFF+ (HU-020) |
+| HU-020 Panel administrativo | **Hecho** | /api/admin/* · RBAC · CRUD catálogos · auditoría · reportes |
+| HU-016 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-026) |
 
 ### Bitácora de avances
 
@@ -171,6 +172,15 @@
 - RN-102 un solo uso; RN-103 `usedAt`; RN-104 colaborador del JWT; alerta 409 si reuso.
 - Respuesta con película/sala/silla/hora para confirmación en dispositivo de puerta.
 - Roles STAFF formales → HU-020; guía `docs/features/hu-024-ticket-validate.md`.
+
+#### HU-020 — Panel Administrativo del Multicine
+- Módulo `backend/src/admin/`: backoffice bajo `/api/admin/*` (excluido del prefijo `v1`).
+- RBAC: `User.role` (`CUSTOMER`/`STAFF`/`ADMIN`/`SUPER_ADMIN`) + claim en JWT + `RolesGuard`.
+- CRUD: geo, cines, salas, sillas, películas (publish/promote), funciones, snacks, usuarios/roles.
+- Ventas: listado órdenes/pagos/facturas; reportes (diario+CSV, ocupación, top movies/snacks, membresías).
+- Auditoría `admin_audit_logs` (RN-087/090) vía interceptor; seed `admin@` / `staff@`.
+- `POST /tickets/validate` exige STAFF+; guía `docs/features/hu-020-admin.md`.
+- Promos formales → HU-026; Cine Flash → HU-019; KPI gerencial → HU-025.
 
 ---
 
@@ -354,6 +364,7 @@ Health OK
 - HU-014 guía: `docs/features/hu-014-tickets-invoice.md`
 - HU-015 guía: `docs/features/hu-015-email-notifications.md`
 - HU-024 guía: `docs/features/hu-024-ticket-validate.md`
+- HU-020 guía: `docs/features/hu-020-admin.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -367,5 +378,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-020 Panel Administrativo del Multicine.
+Siguiente: HU-026 Administración de Promociones y Cupones.
 ```

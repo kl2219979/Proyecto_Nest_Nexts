@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { CartModule } from './cart/cart.module';
 import databaseConfig from './config/database.config';
@@ -123,6 +124,8 @@ import { TicketsModule } from './tickets/tickets.module';
     TicketsModule,
     /** Pagos seguros + órdenes (HU-013). */
     PaymentsModule,
+    /** Panel administrativo / RBAC (HU-020). */
+    AdminModule,
   ],
   providers: [
     /**

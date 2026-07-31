@@ -34,6 +34,7 @@ import { NotificationPreference } from './entities/notification-preference.entit
 import { RefreshToken } from './entities/refresh-token.entity';
 import { UserProfile } from './entities/user-profile.entity';
 import { User } from './entities/user.entity';
+import { UserRole } from './enums/user.enums';
 import { JwtPayload } from './jwt/jwt-payload';
 import {
   benefitsForLevel,
@@ -105,6 +106,8 @@ export type AuthTokensResult = {
   user: {
     id: string;
     email: string;
+    /** Rol RBAC (HU-020) para el cliente / backoffice. */
+    role: UserRole;
     profile: LoginProfileSummary | null;
   };
   membership: LoginMembershipSummary | null;
@@ -542,7 +545,11 @@ export class AuthService {
    * @returns JWT compacto.
    */
   private async signAccessToken(user: User): Promise<string> {
-    const payload: JwtPayload = { sub: user.id, email: user.email };
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
     return this.jwtService.signAsync(payload, {
       expiresIn: ACCESS_TTL_SEC,
     });
@@ -585,6 +592,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        role: user.role,
         profile: profile
           ? {
               firstName: profile.firstName,
