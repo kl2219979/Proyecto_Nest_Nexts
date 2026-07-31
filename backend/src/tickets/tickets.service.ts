@@ -420,6 +420,125 @@ export class TicketsService {
   }
 
   /**
+   * Anula entradas VALID de una orden (HU-016 / RN-068).
+   *
+   * Los QR quedan inutilizables de inmediato; libera `orderTicketItemId`
+   * para poder reemplazar líneas y emitir nuevas entradas (RN-069).
+   *
+   * @param orderId - Orden PAID (mismo número de orden).
+   * @param userId - Titular.
+   * @returns IDs de entradas anuladas.
+   */
+  async cancelValidTicketsForOrder(
+    orderId: string,
+    userId: string,
+  ): Promise<string[]> {
+    const tickets = await this.ticketRepo.find({
+      where: { orderId, userId, status: TicketStatus.VALID },
+    });
+    if (tickets.length === 0) {
+      return [];
+    }
+    for (const ticket of tickets) {
+      ticket.status = TicketStatus.CANCELLED;
+      ticket.orderTicketItemId = null;
+    }
+    await this.ticketRepo.save(tickets);
+    return tickets.map((t) => t.id);
+  }
+
+  /**
+   * Emite nuevas entradas VALID a partir de las líneas actuales de la orden.
+   *
+   * `POST /tickets/regenerate` (HU-016). No toca la factura original
+   * (comprobante fiscal de la compra inicial); solo regenera QRs.
+   *
+   * @param orderId - Orden PAID con líneas de silla actualizadas.
+   * @param userId - Titular (debe coincidir).
+   * @returns Entradas nuevas + factura existente.
+   */
+  async regenerateTicketsForOrder(
+    orderId: string,
+    userId: string,
+  ): Promise<FulfillmentDocuments> {
+    const order = await this.orderRepo.findOne({
+      where: { id: orderId },
+      relations: { tickets: true, snacks: true },
+    });
+    if (!order) {
+      throw new NotFoundException(`Orden no encontrada: ${orderId}`);
+    }
+    if (order.userId !== userId) {
+      throw new ForbiddenException('No puedes regenerar entradas de otra orden');
+    }
+    if (order.status !== OrderStatus.PAID) {
+      throw new ConflictException(
+        'Solo se regeneran entradas de órdenes PAID',
+      );
+    }
+
+    const activeValid = await this.ticketRepo.count({
+      where: { orderId, status: TicketStatus.VALID },
+    });
+    if (activeValid > 0) {
+      throw new ConflictException(
+        'Ya existen entradas VALID; anúlalas antes de regenerar (RN-068)',
+      );
+    }
+
+    const lines = order.tickets ?? [];
+    if (lines.length === 0) {
+      throw new ConflictException(
+        'La orden no tiene líneas de entrada para regenerar',
+      );
+    }
+
+    const { buyerName } = await this.resolveBuyer(order.userId);
+    const ticketEntities: Ticket[] = [];
+    for (const line of lines) {
+      ticketEntities.push(
+        this.ticketRepo.create({
+          orderId: order.id,
+          orderTicketItemId: line.id,
+          userId: order.userId,
+          code: await this.generateUniqueTicketCode(),
+          qrPayload: await this.generateUniqueQrPayload(),
+          status: TicketStatus.VALID,
+          ticketType: TicketType.STANDARD,
+          movieTitle: line.movieTitle,
+          startsAt: line.startsAt,
+          cinemaName: line.cinemaName,
+          roomName: line.roomName,
+          seatLabel: line.seatLabel,
+          format: line.format,
+          language: line.language,
+          buyerName,
+          usedAt: null,
+          validatedByUserId: null,
+        }),
+      );
+    }
+    const savedTickets = await this.ticketRepo.save(ticketEntities);
+    order.ticketsGenerated = true;
+    await this.orderRepo.save(order);
+
+    const invoice = await this.invoiceRepo.findOne({ where: { orderId } });
+    if (!invoice) {
+      throw new ConflictException(
+        'La orden no tiene factura; no se puede regenerar el paquete de documentos',
+      );
+    }
+    return {
+      tickets: savedTickets.map((t) => this.toTicketView(t, invoice.id)),
+      invoice: this.toInvoiceView(
+        invoice,
+        this.parseLines(invoice.linesJson),
+        savedTickets.map((t) => t.id),
+      ),
+    };
+  }
+
+  /**
    * Historial de compras para consumidores internos (p. ej. tests).
    * La vista pública vive en `GET /membership.purchaseHistory`.
    *

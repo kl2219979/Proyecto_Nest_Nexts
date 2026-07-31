@@ -216,6 +216,28 @@ ${link(String(ctx.ticketsUrl ?? '#'), 'Ver mis entradas')}`;
 <p><strong>${this.escape(String(ctx.movieTitle ?? 'La película'))}</strong> ya está en cartelera de tu ciudad.</p>
 ${link(String(ctx.movieUrl ?? '#'), 'Ver en cartelera')}`;
 
+      case EmailTemplate.FUNCTION_CHANGED: {
+        const movie = String(ctx.movieTitle ?? 'tu película');
+        const credit = Number(ctx.creditApplied ?? 0);
+        const surcharge = Number(ctx.surchargeAmount ?? 0);
+        let moneyNote = '';
+        if (credit > 0) {
+          moneyNote = `<p>Se acreditaron <strong>${this.escape(String(ctx.creditApplied))}</strong> a tu billetera Multicine.</p>`;
+        } else if (surcharge > 0) {
+          moneyNote = `<p>Excedente del cambio: <strong>${this.escape(String(ctx.surchargeAmount))}</strong>.</p>`;
+        }
+        return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p>Tu función de <strong>${this.escape(movie)}</strong> fue reprogramada.</p>
+<ul>
+  <li><strong>Horario anterior:</strong> ${this.escape(String(ctx.oldStartsAt ?? ''))}</li>
+  <li><strong>Nuevo horario:</strong> ${this.escape(String(ctx.newStartsAt ?? ''))}</li>
+  <li><strong>Orden:</strong> ${this.escape(String(ctx.orderId ?? ''))}</li>
+</ul>
+<p>Los QR anteriores quedaron anulados. Usa las nuevas entradas.</p>
+${moneyNote}
+${link(String(ctx.ticketsUrl ?? '#'), 'Ver mis entradas')}`;
+      }
+
       default:
         return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
 <p>${this.escape(String(ctx.message ?? 'Tienes una nueva notificación de Multicine.'))}</p>`;

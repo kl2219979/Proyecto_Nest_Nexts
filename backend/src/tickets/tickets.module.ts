@@ -12,14 +12,15 @@ import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 
 /**
- * Documentos digitales post-pago y acceso en puerta (HU-014 / HU-024).
+ * Documentos digitales post-pago, acceso en puerta y regeneración (HU-014 / HU-024 / HU-016).
  *
  * - `GET /tickets` · `GET /tickets/:id` · `GET /tickets/:id/pdf`
  * - `POST /tickets/validate` — escaneo QR (RN-102…104)
+ * - `POST /tickets/regenerate` — nuevos QR tras reprogramar (HU-016 / RN-068)
  * - `GET /invoice/:id` · `GET /invoice/:id/pdf`
  *
  * Generación automática al webhook APPROVED vía `fulfillPaidOrder`.
- * Email con enlaces = HU-015 (integrado en Payments).
+ * Reprogramación orquestada en `RescheduleModule` (HU-016).
  */
 @Module({
   imports: [

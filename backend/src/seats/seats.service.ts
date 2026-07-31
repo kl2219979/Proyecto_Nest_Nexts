@@ -510,6 +510,109 @@ export class SeatsService {
   }
 
   /**
+   * Libera sillas ya vendidas (SOLD) al reprogramar una compra (HU-016).
+   *
+   * Decrementa `soldSeats` de la función original y audita
+   * `RESCHEDULE_RELEASE` (RN-068 / RN-070).
+   *
+   * @param userId - Titular de la compra.
+   * @param reservationId - Reserva original de la orden PAID.
+   * @param seatIds - Sillas a devolver al inventario.
+   * @returns Cantidad liberada.
+   */
+  async releaseSoldSeats(
+    userId: string,
+    reservationId: string,
+    seatIds: string[],
+  ): Promise<number> {
+    if (seatIds.length === 0) {
+      return 0;
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const lockRepo = manager.getRepository(SeatLock);
+      const auditRepo = manager.getRepository(SeatLockAudit);
+      const showtimeRepo = manager.getRepository(Showtime);
+
+      const locks = await lockRepo.find({
+        where: {
+          userId,
+          reservationId,
+          status: SeatLockStatus.SOLD,
+          seatId: In(seatIds),
+        },
+      });
+
+      if (locks.length === 0) {
+        return 0;
+      }
+
+      const byShowtime = new Map<string, number>();
+      for (const lock of locks) {
+        byShowtime.set(
+          lock.showtimeId,
+          (byShowtime.get(lock.showtimeId) ?? 0) + 1,
+        );
+      }
+
+      await lockRepo.remove(locks);
+      await auditRepo.save(
+        locks.map((lock) =>
+          auditRepo.create({
+            showtimeId: lock.showtimeId,
+            seatId: lock.seatId,
+            userId,
+            reservationId: lock.reservationId,
+            action: SeatLockAuditAction.RESCHEDULE_RELEASE,
+          }),
+        ),
+      );
+
+      for (const [showtimeId, count] of byShowtime) {
+        await showtimeRepo.decrement({ id: showtimeId }, 'soldSeats', count);
+      }
+
+      return locks.length;
+    });
+  }
+
+  /**
+   * Carga locks temporales activos de una reserva (HU-016: nuevas sillas).
+   *
+   * @param userId - Dueño de los locks.
+   * @param reservationId - Grupo creado con `POST /functions/:id/seats`.
+   * @returns Locks LOCKED con silla y función.
+   * @throws {NotFoundException} Reserva inexistente o vacía.
+   */
+  async getLockedReservation(
+    userId: string,
+    reservationId: string,
+  ): Promise<SeatLock[]> {
+    await this.expireOverdueLocks();
+
+    const locks = await this.lockRepo.find({
+      where: {
+        userId,
+        reservationId,
+        status: SeatLockStatus.LOCKED,
+      },
+      relations: {
+        seat: true,
+        showtime: { room: { cinema: true }, movie: true },
+      },
+      order: { createdAt: 'ASC' },
+    });
+
+    if (locks.length === 0) {
+      throw new NotFoundException(
+        `Reserva temporal no encontrada o expirada: ${reservationId}`,
+      );
+    }
+
+    return locks;
+  }
+
+  /**
    * `GET /reservations`: reserva(s) temporal(es) activas del usuario.
    *
    * @param userId - Usuario autenticado.

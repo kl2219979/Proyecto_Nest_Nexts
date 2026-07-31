@@ -59,6 +59,7 @@ alwaysApply: true
 - HU-024 escaneo y validación de código QR (POST /tickets/validate, RN-102…104)
 - HU-020 panel administrativo (/api/admin/*, RBAC, auditoría, reportes)
 - HU-026 promociones y cupones (CRUD, RN-105…107, carrito + precios)
+- HU-016 cambio de función (GET /orders, available-functions, PUT reschedule, regenerate, RN-065…070)
 
 ## Siguiente
-- HU-016 Cambio de Función (Reprogramación de Reserva)
+- HU-017 Transferencia de Entradas a Otro Usuario

@@ -34,16 +34,19 @@ import {
   TicketListResponse,
   TicketValidationResult,
   TicketView,
+  FulfillmentDocuments,
 } from './dto/ticket-response';
+import { RegenerateTicketsDto } from './dto/regenerate-tickets.dto';
 import { ValidateTicketDto } from './dto/validate-ticket.dto';
 import { TicketsService } from './tickets.service';
 
 /**
- * Entradas digitales y validación en puerta (HU-014 / HU-024).
+ * Entradas digitales y validación en puerta (HU-014 / HU-024 / HU-016).
  *
  * Prefijo global `/api/v1`:
  * - `GET /tickets` — Mis compras / entradas
  * - `POST /tickets/validate` — Escaneo QR (STAFF+, HU-020 / RN-088)
+ * - `POST /tickets/regenerate` — Nuevos QR tras reprogramar (HU-016)
  * - `GET /tickets/:id` — detalle
  * - `GET /tickets/:id/pdf` — descarga PDF (RN-059)
  */
@@ -107,6 +110,39 @@ export class TicketsController {
     @Body() dto: ValidateTicketDto,
   ): Promise<TicketValidationResult> {
     return this.ticketsService.validateQr(user.userId, dto.qrPayload);
+  }
+
+  /**
+   * Regenera entradas/QR de una orden tras actualizar sus líneas (HU-016).
+   *
+   * Normalmente lo invoca el flujo `PUT /orders/:id/reschedule`.
+   * Expuesto para reintentos operativos si la regeneración falló a medias.
+   *
+   * @param user - JWT.
+   * @param dto - `orderId` PAID sin entradas VALID vigentes.
+   */
+  @Post('regenerate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Regenerar entradas digitales de una orden',
+    description:
+      'Emite nuevos códigos/QR (RN-068) sobre las líneas actuales. ' +
+      'Requiere que no existan entradas VALID previas (ya anuladas).',
+  })
+  @ApiOkResponse({ description: 'Entradas regeneradas' })
+  @ApiConflictResponse({
+    description: 'Aún hay VALID, orden no PAID o sin líneas',
+  })
+  @ApiNotFoundResponse({ description: 'Orden no encontrada' })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  regenerate(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: RegenerateTicketsDto,
+  ): Promise<FulfillmentDocuments> {
+    return this.ticketsService.regenerateTicketsForOrder(
+      dto.orderId,
+      user.userId,
+    );
   }
 
   /**

@@ -42,7 +42,8 @@
 | HU-024 Escaneo QR puerta | **Hecho** | POST /tickets/validate · VALID→USED · RN-102…104 · STAFF+ (HU-020) |
 | HU-020 Panel administrativo | **Hecho** | /api/admin/* · RBAC · CRUD catálogos · auditoría · reportes |
 | HU-026 Promociones y cupones | **Hecho** | CRUD /promotions · RN-105…107 · carrito + precios · redenciones |
-| HU-016 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-016) |
+| HU-016 Cambio de función | **Hecho** | GET /orders · available-functions · PUT reschedule · regenerate · RN-065…070 |
+| HU-017 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-017) |
 
 ### Bitácora de avances
 
@@ -193,6 +194,15 @@
 - Seed: `MULTICINE10`, `SNACK5K`, `TWO4ONE`, `BDAY20`, `BLACK30` + promo automática 15%.
 - Guía `docs/features/hu-026-promotions.md`.
 - Cine Flash automático → HU-019.
+
+#### HU-016 — Cambio de Función (Reprogramación de Reserva)
+- Módulo `backend/src/reschedule/`: `RescheduleService` + `OrdersController` + auditoría `reschedule_audits`.
+- Endpoints JWT: `GET /orders`, `GET /orders/:id/available-functions`, `PUT /orders/:id/reschedule`, `POST /tickets/regenerate`.
+- Flujo: lock sillas nuevas (HU-010) → anular QR (`CANCELLED`) → liberar SOLD viejas → confirmar SOLD nuevas → mismas líneas de orden (RN-069) → nuevos tickets.
+- RN-065 ventana 1 h · RN-066/067 solo futuras · RN-068 invalidar QR · RN-070 auditoría.
+- Ajuste económico: crédito/débito de billetera; correo `FUNCTION_CHANGED` (HU-015).
+- Guía `docs/features/hu-016-reschedule.md`.
+- Transferencia de entradas → HU-017.
 
 ---
 
@@ -378,6 +388,7 @@ Health OK
 - HU-024 guía: `docs/features/hu-024-ticket-validate.md`
 - HU-020 guía: `docs/features/hu-020-admin.md`
 - HU-026 guía: `docs/features/hu-026-promotions.md`
+- HU-016 guía: `docs/features/hu-016-reschedule.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -391,5 +402,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-016 Cambio de Función (Reprogramación de Reserva).
+Siguiente: HU-017 Transferencia de Entradas a Otro Usuario.
 ```

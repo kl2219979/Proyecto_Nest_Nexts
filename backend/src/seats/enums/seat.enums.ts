@@ -50,4 +50,6 @@ export enum SeatLockAuditAction {
   EXPIRE = 'EXPIRE',
   /** Confirmación de venta tras pago aprobado (HU-013 / RN-053). */
   SELL = 'SELL',
+  /** Liberación de sillas SOLD al reprogramar (HU-016 / RN-068). */
+  RESCHEDULE_RELEASE = 'RESCHEDULE_RELEASE',
 }

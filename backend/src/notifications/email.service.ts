@@ -360,6 +360,40 @@ export class EmailService {
   }
 
   /**
+   * Cambio de función / reprogramación (HU-016).
+   */
+  async sendFunctionChanged(params: {
+    userId: string;
+    email: string;
+    orderId: string;
+    movieTitle: string;
+    oldStartsAt: string;
+    newStartsAt: string;
+    priceDifference: string;
+    creditApplied: string;
+    surchargeAmount: string;
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.email,
+      template: EmailTemplate.FUNCTION_CHANGED,
+      payload: {
+        orderId: params.orderId,
+        movieTitle: params.movieTitle,
+        oldStartsAt: params.oldStartsAt,
+        newStartsAt: params.newStartsAt,
+        priceDifference: params.priceDifference,
+        creditApplied: params.creditApplied,
+        surchargeAmount: params.surchargeAmount,
+        ticketsUrl: `${base}/api/v1/tickets`,
+      },
+      relatedEntityType: 'ORDER_RESCHEDULE',
+      relatedEntityId: params.orderId,
+    });
+  }
+
+  /**
    * Pago rechazado.
    */
   async sendPaymentRejected(

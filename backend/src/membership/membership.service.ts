@@ -206,6 +206,61 @@ export class MembershipService {
   }
 
   /**
+   * Acredita saldo a favor en la billetera (HU-016: diferencia negativa al reprogramar).
+   *
+   * La carga formal de giftcards llega en HU-018; aquí solo se usa como
+   * “saldo a favor” tras un cambio de función más barato.
+   *
+   * @param userId - Titular de la billetera.
+   * @param amount - Monto positivo a sumar (COP).
+   * @returns Nuevo balance como string decimal.
+   */
+  async creditWallet(userId: string, amount: number): Promise<string> {
+    if (amount <= 0) {
+      throw new ConflictException('El crédito a billetera debe ser positivo');
+    }
+    const wallet = await this.walletRepo.findOne({ where: { userId } });
+    if (!wallet) {
+      throw new NotFoundException(`Billetera no encontrada para usuario ${userId}`);
+    }
+    const next = Number(wallet.balance) + amount;
+    wallet.balance = next.toFixed(2);
+    await this.walletRepo.save(wallet);
+    return wallet.balance;
+  }
+
+  /**
+   * Debita saldo de la billetera para cubrir un excedente (HU-016).
+   *
+   * @param userId - Titular.
+   * @param amount - Monto positivo a restar (COP).
+   * @returns Nuevo balance.
+   * @throws {ConflictException} Saldo insuficiente.
+   */
+  async debitWallet(userId: string, amount: number): Promise<string> {
+    if (amount <= 0) {
+      throw new ConflictException('El débito de billetera debe ser positivo');
+    }
+    const wallet = await this.walletRepo.findOne({ where: { userId } });
+    if (!wallet) {
+      throw new NotFoundException(`Billetera no encontrada para usuario ${userId}`);
+    }
+    const current = Number(wallet.balance);
+    if (current < amount) {
+      throw new ConflictException({
+        message:
+          'Saldo de billetera insuficiente para el excedente del cambio de función',
+        code: 'WALLET_INSUFFICIENT',
+        balance: wallet.balance,
+        required: amount.toFixed(2),
+      });
+    }
+    wallet.balance = (current - amount).toFixed(2);
+    await this.walletRepo.save(wallet);
+    return wallet.balance;
+  }
+
+  /**
    * Crea membresía + billetera dentro de una transacción ajena
    * (p. ej. el registro atómico de `AuthService`).
    *

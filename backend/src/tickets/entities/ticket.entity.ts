@@ -43,13 +43,17 @@ export class Ticket {
   @JoinColumn({ name: 'orderId' })
   order!: Order;
 
-  /** Línea de orden que originó esta entrada (1:1). */
-  @Column({ type: 'uuid', unique: true })
-  orderTicketItemId!: string;
+  /**
+   * Línea de orden que originó esta entrada (1:1 mientras esté VALID).
+   * Pasa a `null` al anular por reprogramación (HU-016) para liberar
+   * la FK y permitir nuevas líneas/entradas en la misma orden (RN-069).
+   */
+  @Column({ type: 'uuid', nullable: true })
+  orderTicketItemId!: string | null;
 
-  @ManyToOne(() => OrderTicketItem, { onDelete: 'CASCADE' })
+  @ManyToOne(() => OrderTicketItem, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'orderTicketItemId' })
-  orderTicketItem!: OrderTicketItem;
+  orderTicketItem!: OrderTicketItem | null;
 
   /** Titular comprador. */
   @Column({ type: 'uuid' })
