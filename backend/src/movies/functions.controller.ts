@@ -32,7 +32,7 @@ export class FunctionsController {
   @ApiOperation({
     summary: 'Precio actualizado de una función',
     description:
-      'RN-037 precio según formato/sala/horario · RN-038 promociones (vacío hasta HU-026) · RN-035/036 solo futuras activas.',
+      'RN-037 precio según formato/sala/horario · RN-038 promociones automáticas (HU-026) · RN-035/036 solo futuras activas.',
   })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ description: 'Desglose de precio de la función' })

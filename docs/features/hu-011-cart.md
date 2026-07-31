@@ -11,7 +11,7 @@ POST /cart                  → carrito + descuento membresía (RN-047)
 GET  /cart                  → resumen / totales (renueva TTL)
 PUT  /cart                  → quitar sillas / snacks provisionales
 POST /cart/apply-membership → reafirma descuento
-POST /cart/apply-promo      → cupón demo (RN-048)
+POST /cart/apply-promo      → cupón del catálogo (HU-026)
 DELETE /cart                → cancela + libera sillas
 ```
 
@@ -29,7 +29,7 @@ Prefijo global: `/api/v1` · todos requieren `Authorization: Bearer <access>`
 | `PUT` | `/cart` | `removeSeatIds` y/o `snacks` |
 | `DELETE` | `/cart` | Cancela y libera locks |
 | `POST` | `/cart/apply-membership` | Aplica % de membresía (RN-047) |
-| `POST` | `/cart/apply-promo` | Cupón demo (`MULTICINE10`, `SNACK5K`) |
+| `POST` | `/cart/apply-promo` | Cupón del catálogo HU-026 (`MULTICINE10`, `SNACK5K`, …) |
 
 Swagger: http://localhost:3000/api/docs → tag **Cart**
 

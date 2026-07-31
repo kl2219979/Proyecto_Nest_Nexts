@@ -77,8 +77,8 @@ export class Cart {
   membershipDiscountApplied!: boolean;
 
   /**
-   * Cupón aplicado (stub hasta CRUD de promos HU-026).
-   * RN-048: no combinar si `promoStackable = false`.
+   * Cupón aplicado desde el catálogo (HU-026).
+   * RN-048 / RN-105: no combinar si `promoStackable = false`.
    */
   @Column({ type: 'varchar', length: 40, nullable: true })
   promoCode!: string | null;

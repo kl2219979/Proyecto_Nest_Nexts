@@ -58,6 +58,7 @@ alwaysApply: true
 - HU-015 notificaciones automáticas por correo (historial, prefs, RN-061…064)
 - HU-024 escaneo y validación de código QR (POST /tickets/validate, RN-102…104)
 - HU-020 panel administrativo (/api/admin/*, RBAC, auditoría, reportes)
+- HU-026 promociones y cupones (CRUD, RN-105…107, carrito + precios)
 
 ## Siguiente
-- HU-026 Administración de Promociones y Cupones
+- HU-016 Cambio de Función (Reprogramación de Reserva)

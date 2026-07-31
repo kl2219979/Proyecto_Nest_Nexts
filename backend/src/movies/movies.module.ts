@@ -5,6 +5,7 @@ import { City } from '../locations/entities/city.entity';
 import { Cinema } from '../locations/entities/cinema.entity';
 import { LocationsModule } from '../locations/locations.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PromotionsModule } from '../promotions/promotions.module';
 import { Genre } from './entities/genre.entity';
 import { Movie } from './entities/movie.entity';
 import { CastMember } from './entities/cast-member.entity';
@@ -27,6 +28,7 @@ import { seedMovies } from './movies.seed';
   imports: [
     LocationsModule,
     NotificationsModule,
+    PromotionsModule,
     TypeOrmModule.forFeature([
       Movie,
       Genre,

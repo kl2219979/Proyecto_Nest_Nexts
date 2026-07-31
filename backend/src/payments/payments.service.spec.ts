@@ -11,6 +11,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../auth/entities/user.entity';
 import { CartService } from '../cart/cart.service';
 import { EmailService } from '../notifications/email.service';
+import { PromotionsService } from '../promotions/promotions.service';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { TicketsService } from '../tickets/tickets.service';
@@ -183,6 +184,9 @@ describe('PaymentsService', () => {
     sendPurchaseSuccess: jest.fn().mockResolvedValue({}),
     sendPaymentRejected: jest.fn().mockResolvedValue({}),
   };
+  const promotionsService = {
+    recordRedemptions: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -219,6 +223,7 @@ describe('PaymentsService', () => {
         { provide: TicketsService, useValue: ticketsService },
         { provide: PaymentGatewayService, useValue: gateway },
         { provide: EmailService, useValue: emailService },
+        { provide: PromotionsService, useValue: promotionsService },
       ],
     }).compile();
 

@@ -5,6 +5,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { City } from '../locations/entities/city.entity';
+import { PromotionsService } from '../promotions/promotions.service';
 import { Movie } from './entities/movie.entity';
 import { Showtime } from './entities/showtime.entity';
 import {
@@ -26,6 +27,9 @@ describe('ShowtimesService', () => {
   const cityRepo = {
     findOne: jest.fn(),
   };
+  const promotionsService = {
+    listForFunction: jest.fn().mockResolvedValue([]),
+  };
 
   /**
    * Arma el módulo de testing.
@@ -36,6 +40,7 @@ describe('ShowtimesService', () => {
     jest.clearAllMocks();
     cityRepo.findOne.mockResolvedValue({ id: 'city-1', isActive: true });
     movieRepo.findOne.mockResolvedValue({ id: 'movie-1', isActive: true });
+    promotionsService.listForFunction.mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -43,6 +48,7 @@ describe('ShowtimesService', () => {
         { provide: getRepositoryToken(Showtime), useValue: showtimeRepo },
         { provide: getRepositoryToken(Movie), useValue: movieRepo },
         { provide: getRepositoryToken(City), useValue: cityRepo },
+        { provide: PromotionsService, useValue: promotionsService },
       ],
     }).compile();
 
@@ -145,11 +151,11 @@ describe('ShowtimesService', () => {
   });
 
   /**
-   * Precio de función futura activa (RN-037 / RN-038 stub).
+   * Precio de función futura activa (RN-037 / RN-038).
    *
    * @returns {Promise<void>}
    */
-  it('getFunctionPrices returns base price and empty promotions', async () => {
+  it('getFunctionPrices returns base price and promotions from catalog', async () => {
     const startsAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
     mockShowtimeQb({
       id: 'fn-1',
@@ -169,13 +175,25 @@ describe('ShowtimesService', () => {
         cinema: { id: 'cin-2', name: 'Multicine Norte' },
       },
     });
+    promotionsService.listForFunction.mockResolvedValue([
+      {
+        code: null,
+        name: 'Promo tarde 15%',
+        description: '15% off',
+        discountAmount: 6750,
+        discountKind: 'PERCENT',
+        discountValue: 15,
+        stackable: true,
+        type: 'SEASON',
+      },
+    ]);
 
     const prices = await service.getFunctionPrices('fn-1');
 
     expect(prices.basePrice).toBe(45000);
-    expect(prices.finalPrice).toBe(45000);
-    expect(prices.promotions).toEqual([]);
-    expect(prices.discountTotal).toBe(0);
+    expect(prices.finalPrice).toBe(38250);
+    expect(prices.promotions).toHaveLength(1);
+    expect(prices.discountTotal).toBe(6750);
     expect(prices.priceFactors.format).toBe(MovieFormat.VIP);
     expect(prices.availableSeats).toBe(35);
     expect(prices.isSelectable).toBe(true);

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { MembershipModule } from '../membership/membership.module';
 import { Showtime } from '../movies/entities/showtime.entity';
+import { PromotionsModule } from '../promotions/promotions.module';
 import { SeatsModule } from '../seats/seats.module';
 import { SnacksModule } from '../snacks/snacks.module';
 import { CartController } from './cart.controller';
@@ -12,12 +13,13 @@ import { CartTicketItem } from './entities/cart-ticket-item.entity';
 import { Cart } from './entities/cart.entity';
 
 /**
- * Módulo del carrito de compras (HU-011 + snacks HU-012).
+ * Módulo del carrito de compras (HU-011 + snacks HU-012 + promos HU-026).
  *
  * Endpoints JWT bajo `/api/v1/cart`:
  * CRUD + apply-* + POST/PUT/DELETE snacks.
  *
- * Depende de `SeatsModule`, `MembershipModule` y `SnacksModule`.
+ * Depende de `SeatsModule`, `MembershipModule`, `SnacksModule` y
+ * `PromotionsModule`.
  */
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { Cart } from './entities/cart.entity';
     SeatsModule,
     MembershipModule,
     SnacksModule,
+    PromotionsModule,
     TypeOrmModule.forFeature([
       Cart,
       CartTicketItem,

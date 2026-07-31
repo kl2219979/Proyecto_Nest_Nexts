@@ -14,6 +14,7 @@ import { User } from '../auth/entities/user.entity';
 import { CartService, CART_TTL_MS } from '../cart/cart.service';
 import type { CartResponse } from '../cart/dto/cart-response';
 import { EmailService } from '../notifications/email.service';
+import { PromotionsService } from '../promotions/promotions.service';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { TicketsService } from '../tickets/tickets.service';
@@ -65,6 +66,7 @@ export class PaymentsService {
    * @param ticketsService - Entradas PDF/QR + factura (HU-014).
    * @param gateway - Adapter AES + firma webhook.
    * @param emailService - Correo compra / rechazo (HU-015).
+   * @param promotionsService - Redenciones de cupón (HU-026 / RN-107).
    */
   constructor(
     @InjectRepository(Order)
@@ -85,6 +87,7 @@ export class PaymentsService {
     private readonly ticketsService: TicketsService,
     private readonly gateway: PaymentGatewayService,
     private readonly emailService: EmailService,
+    private readonly promotionsService: PromotionsService,
   ) {}
 
   /**
@@ -385,6 +388,14 @@ export class PaymentsService {
 
     order.status = OrderStatus.PAID;
     await this.orderRepo.save(order);
+
+    /** HU-026 / RN-107: contabiliza usos del cupón al confirmar pago. */
+    await this.promotionsService.recordRedemptions(
+      payment.userId,
+      order.id,
+      order.promoCode,
+      Number(order.promoDiscount),
+    );
 
     /** HU-014: entradas digitales + factura electrónica. */
     const docs = await this.ticketsService.fulfillPaidOrder(order.id);

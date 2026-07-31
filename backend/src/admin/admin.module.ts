@@ -22,6 +22,7 @@ import { Showtime } from '../movies/entities/showtime.entity';
 import { MoviesModule } from '../movies/movies.module';
 import { Order } from '../payments/entities/order.entity';
 import { Payment } from '../payments/entities/payment.entity';
+import { PromotionsModule } from '../promotions/promotions.module';
 import { Seat } from '../seats/entities/seat.entity';
 import { Snack } from '../snacks/entities/snack.entity';
 import { Invoice } from '../tickets/entities/invoice.entity';
@@ -29,6 +30,7 @@ import { seedAdminUsers } from './admin.seed';
 import { AdminContentController } from './controllers/admin-content.controller';
 import { AdminGeoController } from './controllers/admin-geo.controller';
 import { AdminOpsController } from './controllers/admin-ops.controller';
+import { AdminPromotionsController } from './controllers/admin-promotions.controller';
 import { AdminVenuesController } from './controllers/admin-venues.controller';
 import { AdminAuditLog } from './entities/admin-audit-log.entity';
 import { AdminAuditInterceptor } from './interceptors/admin-audit.interceptor';
@@ -44,8 +46,8 @@ import { AdminUsersService } from './services/admin-users.service';
  * Expone CRUD bajo `/api/admin/*` con JWT + RBAC (RN-088) y auditoría (RN-087).
  *
  * @remarks
- * Promociones formales / Cine Flash / KPIs gerenciales profundos =
- * HU-026 / HU-019 / HU-025 (fuera de alcance aquí).
+ * Promociones formales: CRUD en `AdminPromotionsController` (HU-026).
+ * Cine Flash automático / KPIs gerenciales = HU-019 / HU-025.
  */
 @Module({
   imports: [
@@ -53,6 +55,7 @@ import { AdminUsersService } from './services/admin-users.service';
     LocationsModule,
     MoviesModule,
     MembershipModule,
+    PromotionsModule,
     TypeOrmModule.forFeature([
       AdminAuditLog,
       Country,
@@ -81,6 +84,7 @@ import { AdminUsersService } from './services/admin-users.service';
     AdminVenuesController,
     AdminContentController,
     AdminOpsController,
+    AdminPromotionsController,
   ],
   providers: [
     AdminAuditService,

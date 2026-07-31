@@ -62,8 +62,8 @@ export type MovieFunctionsResponse = {
  * Desglose de precio de una función (`GET /functions/:id/prices`).
  *
  * RN-037: el precio depende de formato, sala y horario (ya embebidos
- * en `Showtime.price`). RN-038: promociones se recalcularán cuando
- * exista el motor (HU-026); hoy `promotions` va vacío.
+ * en `Showtime.price`). RN-038: promociones automáticas del catálogo
+ * (HU-026); `discountTotal` / `finalPrice` usan el mejor descuento.
  */
 export type FunctionPricesResponse = {
   functionId: string;
@@ -83,8 +83,8 @@ export type FunctionPricesResponse = {
     startsAt: string;
   };
   /**
-   * Promociones aplicables (RN-038).
-   * Vacío hasta HU-026; el campo existe para no romper el contrato.
+   * Promociones automáticas aplicables (RN-038 / HU-026).
+   * Cupones con código se aplican en `POST /cart/apply-promo`.
    */
   promotions: Array<{
     code: string;
@@ -92,7 +92,7 @@ export type FunctionPricesResponse = {
     discountAmount: number;
   }>;
   discountTotal: number;
-  /** `basePrice - discountTotal` (hoy = basePrice). */
+  /** `basePrice - discountTotal` (mejor promo automática). */
   finalPrice: number;
   currency: 'COP';
   availableSeats: number;

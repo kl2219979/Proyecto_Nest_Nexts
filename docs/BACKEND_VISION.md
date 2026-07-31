@@ -41,7 +41,8 @@
 | HU-015 Notificaciones email | **Hecho** | Motor correo + historial + prefs · RN-061…064 · cron recordatorios |
 | HU-024 Escaneo QR puerta | **Hecho** | POST /tickets/validate · VALID→USED · RN-102…104 · STAFF+ (HU-020) |
 | HU-020 Panel administrativo | **Hecho** | /api/admin/* · RBAC · CRUD catálogos · auditoría · reportes |
-| HU-016 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-026) |
+| HU-026 Promociones y cupones | **Hecho** | CRUD /promotions · RN-105…107 · carrito + precios · redenciones |
+| HU-016 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-016) |
 
 ### Bitácora de avances
 
@@ -181,6 +182,17 @@
 - Auditoría `admin_audit_logs` (RN-087/090) vía interceptor; seed `admin@` / `staff@`.
 - `POST /tickets/validate` exige STAFF+; guía `docs/features/hu-020-admin.md`.
 - Promos formales → HU-026; Cine Flash → HU-019; KPI gerencial → HU-025.
+
+#### HU-026 — Administración de Promociones y Cupones
+- Módulo `backend/src/promotions/`: entidades `Promotion` + `PromotionRedemption`.
+- CRUD: `GET/POST/PUT/DELETE /api/admin/promotions` (auditoría) + espejo ADMIN en `/api/v1/promotions`.
+- Público: `GET /api/v1/promotions` (activas/vigentes).
+- Tipos: 2x1, %, combo, cumpleaños, membresía, temporada, Black Friday, Cine Flash (tipología).
+- Reglas: RN-105 apilables · RN-106 vigencia · RN-107 max por usuario; scopes ciudad/cine/sala/película/género/formato.
+- Integración: `POST /cart/apply-promo` (reemplaza DEMO_PROMOS); `GET /functions/:id/prices` (RN-038); redención al pago PAID.
+- Seed: `MULTICINE10`, `SNACK5K`, `TWO4ONE`, `BDAY20`, `BLACK30` + promo automática 15%.
+- Guía `docs/features/hu-026-promotions.md`.
+- Cine Flash automático → HU-019.
 
 ---
 
@@ -365,6 +377,7 @@ Health OK
 - HU-015 guía: `docs/features/hu-015-email-notifications.md`
 - HU-024 guía: `docs/features/hu-024-ticket-validate.md`
 - HU-020 guía: `docs/features/hu-020-admin.md`
+- HU-026 guía: `docs/features/hu-026-promotions.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -378,5 +391,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-026 Administración de Promociones y Cupones.
+Siguiente: HU-016 Cambio de Función (Reprogramación de Reserva).
 ```

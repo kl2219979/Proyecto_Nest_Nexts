@@ -229,10 +229,10 @@ export class CartController {
   }
 
   /**
-   * Aplica un cupón demo (RN-048; catálogo real = HU-026).
+   * Aplica un cupón del catálogo (HU-026).
    *
    * @param user - Usuario del Access JWT.
-   * @param dto - Código (`MULTICINE10`, `SNACK5K`).
+   * @param dto - Código de promoción.
    * @returns {Promise<CartResponse>} Totales con promo.
    */
   @Post('apply-promo')
@@ -240,10 +240,10 @@ export class CartController {
   @ApiOperation({
     summary: 'Aplicar promoción / cupón',
     description:
-      'Demo: MULTICINE10 (no apilable), SNACK5K (apilable). RN-048.',
+      'Catálogo admin (HU-026). RN-048/105 apilabilidad · RN-106 vigencia · RN-107 tope por usuario.',
   })
   @ApiOkResponse({ description: 'Promoción aplicada' })
-  @ApiConflictResponse({ description: 'Promos no combinables (RN-048)' })
+  @ApiConflictResponse({ description: 'Promos no combinables (RN-048/105)' })
   @ApiNotFoundResponse({ description: 'Cupón o carrito inexistente' })
   @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
   applyPromo(

@@ -17,6 +17,7 @@ import {
 } from '../movies/enums/movie.enums';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
+import { PromotionsService } from '../promotions/promotions.service';
 import { CartService, CART_TAX_RATE } from './cart.service';
 import { CartSnackItem } from './entities/cart-snack-item.entity';
 import { CartTicketItem } from './entities/cart-ticket-item.entity';
@@ -62,6 +63,10 @@ describe('CartService', () => {
   };
   const snacksService = {
     assertPurchasable: jest.fn(),
+  };
+  const promotionsService = {
+    buildCartContext: jest.fn(),
+    applyCodeToCart: jest.fn(),
   };
 
   const futureStarts = new Date(Date.now() + 3 * 60 * 60 * 1000);
@@ -142,6 +147,7 @@ describe('CartService', () => {
         { provide: SeatsService, useValue: seatsService },
         { provide: MembershipService, useValue: membershipService },
         { provide: SnacksService, useValue: snacksService },
+        { provide: PromotionsService, useValue: promotionsService },
       ],
     }).compile();
 
@@ -231,9 +237,75 @@ describe('CartService', () => {
     } as unknown as Cart;
 
     cartRepo.findOne.mockResolvedValue(cart);
+    promotionsService.buildCartContext.mockResolvedValue({
+      userId: 'user-1',
+      ticketsSubtotal: 0,
+      snacksSubtotal: 0,
+      ticketUnitPrices: [],
+    });
+    promotionsService.applyCodeToCart.mockRejectedValue(
+      new ConflictException(
+        'Las promociones no se pueden combinar (RN-048 / RN-105)',
+      ),
+    );
     await expect(
       service.applyPromo('user-1', { code: 'SNACK5K' }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('applyPromo applies formal coupon (HU-026)', async () => {
+    const cart = {
+      id: 'cart-1',
+      userId: 'user-1',
+      status: CartStatus.ACTIVE,
+      reservationId: 'res-1',
+      showtimeId: 'fn-1',
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+      lastActivityAt: new Date(),
+      membershipDiscountApplied: true,
+      promoCode: null,
+      promoDiscountAmount: 0,
+      promoStackable: null,
+      giftcardCode: null,
+      giftcardAmount: 0,
+      tickets: [
+        {
+          id: 't1',
+          seatId: 'seat-a',
+          seatLabel: 'A1',
+          movieId: 'movie-1',
+          movieTitle: 'Demo Film',
+          startsAt: futureStarts,
+          roomName: 'Sala 1',
+          cinemaName: 'Laureles',
+          format: '2D',
+          language: 'ES',
+          unitPrice: 20000,
+        },
+      ],
+      snacks: [],
+      createdAt: new Date(),
+    } as unknown as Cart;
+
+    cartRepo.findOne.mockResolvedValue(cart);
+    promotionsService.buildCartContext.mockResolvedValue({
+      userId: 'user-1',
+      ticketsSubtotal: 20000,
+      snacksSubtotal: 0,
+      ticketUnitPrices: [20000],
+    });
+    promotionsService.applyCodeToCart.mockResolvedValue({
+      promotionId: 'promo-1',
+      code: 'MULTICINE10',
+      name: 'Descuento Multicine',
+      discountAmount: 10000,
+      stackable: false,
+      description: 'Demo',
+    });
+
+    const result = await service.applyPromo('user-1', { code: 'multicine10' });
+    expect(result.promo.code).toBe('MULTICINE10');
+    expect(result.summary.promoDiscount).toBe(10000);
   });
 
   it('getActive throws NotFound when no cart', async () => {

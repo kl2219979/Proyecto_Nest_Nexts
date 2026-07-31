@@ -5,6 +5,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { City } from '../locations/entities/city.entity';
+import { PromotionsService } from '../promotions/promotions.service';
 import { MovieFunctionsQueryDto } from './dto/movie-functions-query.dto';
 import {
   FunctionPricesResponse,
@@ -17,12 +18,12 @@ import { Showtime } from './entities/showtime.entity';
 import { AudioType, MovieFormat, RoomType } from './enums/movie.enums';
 
 /**
- * Selección de función y precios (HU-009).
+ * Selección de función y precios (HU-009 + promos HU-026).
  *
  * RN-035: solo funciones futuras (`startsAt > now`).
  * RN-036: solo activas (`isActive`).
  * RN-037: precio por función (formato / sala / horario).
- * RN-038: promociones = stub vacío hasta HU-026.
+ * RN-038: promociones automáticas desde el catálogo (HU-026).
  *
  * Separado de `MoviesService` (cartelera/detalle) para no mezclar
  * responsabilidades (SOLID — Single Responsibility).
@@ -33,6 +34,7 @@ export class ShowtimesService {
    * @param showtimeRepo - Funciones de proyección.
    * @param movieRepo - Valida que la película exista.
    * @param cityRepo - Valida ciudad de contexto.
+   * @param promotionsService - Promos aplicables (RN-038).
    */
   constructor(
     @InjectRepository(Showtime)
@@ -41,6 +43,7 @@ export class ShowtimesService {
     private readonly movieRepo: Repository<Movie>,
     @InjectRepository(City)
     private readonly cityRepo: Repository<City>,
+    private readonly promotionsService: PromotionsService,
   ) {}
 
   /**
@@ -122,6 +125,21 @@ export class ShowtimesService {
     );
     const isSoldOut = availableSeats === 0;
 
+    const promoViews = await this.promotionsService.listForFunction(
+      showtime.id,
+      basePrice,
+    );
+    const promotions = promoViews.map((p) => ({
+      code: p.code ?? p.name,
+      description: p.description,
+      discountAmount: p.discountAmount,
+    }));
+    // RN-038: si hay varias automáticas, se muestra la mejor (mayor dto).
+    const bestDiscount =
+      promotions.length === 0
+        ? 0
+        : Math.max(...promotions.map((p) => p.discountAmount));
+
     return {
       functionId: showtime.id,
       movieId: showtime.movieId,
@@ -144,9 +162,10 @@ export class ShowtimesService {
         roomType: showtime.room.roomType,
         startsAt: showtime.startsAt.toISOString(),
       },
-      promotions: [],
-      discountTotal: 0,
-      finalPrice: basePrice,
+      promotions,
+      discountTotal: Math.round((bestDiscount + Number.EPSILON) * 100) / 100,
+      finalPrice:
+        Math.round((basePrice - bestDiscount + Number.EPSILON) * 100) / 100,
       currency: 'COP',
       availableSeats,
       capacity: showtime.room.capacity,

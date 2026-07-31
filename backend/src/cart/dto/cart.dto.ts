@@ -44,7 +44,7 @@ export class UpdateCartDto {
 }
 
 /**
- * Body de `POST /cart/apply-promo` (stub RN-048 hasta HU-026).
+ * Body de `POST /cart/apply-promo` (HU-026 / catálogo admin).
  */
 export class ApplyPromoDto {
   @ApiProperty({ example: 'MULTICINE10', description: 'Código de cupón' })
@@ -52,24 +52,3 @@ export class ApplyPromoDto {
   @MaxLength(40)
   code!: string;
 }
-
-/**
- * Cupones de demostración hasta el CRUD de promociones (HU-026).
- *
- * Permite ejercitar RN-048 (no combinación) sin inventar el módulo admin.
- */
-export const DEMO_PROMOS: Record<
-  string,
-  { discountAmount: number; stackable: boolean; description: string }
-> = {
-  MULTICINE10: {
-    discountAmount: 10000,
-    stackable: false,
-    description: 'Demo: $10.000 off (no apilable)',
-  },
-  SNACK5K: {
-    discountAmount: 5000,
-    stackable: true,
-    description: 'Demo: $5.000 off (apilable)',
-  },
-};

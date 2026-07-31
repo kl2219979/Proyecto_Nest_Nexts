@@ -11,6 +11,7 @@ import { MembershipService } from '../membership/membership.service';
 import { Showtime } from '../movies/entities/showtime.entity';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
+import { PromotionsService } from '../promotions/promotions.service';
 import {
   CartResponse,
   CartSnackView,
@@ -26,7 +27,6 @@ import {
 import {
   ApplyPromoDto,
   CreateCartDto,
-  DEMO_PROMOS,
   UpdateCartDto,
 } from './dto/cart.dto';
 import { CartSnackItem } from './entities/cart-snack-item.entity';
@@ -55,7 +55,7 @@ function money(value: number): number {
  *
  * RN-044 un ACTIVE por usuario · RN-045 extiende locks de sillas ·
  * RN-046 expira a los 10 min · RN-047 descuento membresía ·
- * RN-048 promos no apilables según configuración.
+ * RN-048 / RN-105 promos según configuración administrativa (HU-026).
  *
  * Separado de `SeatsService` (locks) y de pagos (HU-013) por SRP.
  */
@@ -69,6 +69,7 @@ export class CartService {
    * @param seatsService - Reservas / TTL de sillas (HU-010).
    * @param membershipService - Nivel y beneficios (RN-047 / RN-051).
    * @param snacksService - Catálogo y stock (HU-012 / RN-049).
+   * @param promotionsService - Cupones formales (HU-026).
    */
   constructor(
     @InjectRepository(Cart)
@@ -82,6 +83,7 @@ export class CartService {
     private readonly seatsService: SeatsService,
     private readonly membershipService: MembershipService,
     private readonly snacksService: SnacksService,
+    private readonly promotionsService: PromotionsService,
   ) {}
 
   /**
@@ -383,7 +385,9 @@ export class CartService {
   }
 
   /**
-   * `POST /cart/apply-promo`: aplica cupón demo (RN-048 / stub HU-026).
+   * `POST /cart/apply-promo`: aplica cupón del catálogo (HU-026).
+   *
+   * RN-048 / RN-105 apilabilidad · RN-106 vigencia · RN-107 tope por usuario.
    *
    * @param userId - Usuario del JWT.
    * @param dto - Código de promoción.
@@ -394,28 +398,45 @@ export class CartService {
     const cart = await this.requireActiveCart(userId);
     await this.assertLocksStillHeld(cart);
 
-    const code = dto.code.trim().toUpperCase();
-    const promo = DEMO_PROMOS[code];
-    if (!promo) {
-      throw new NotFoundException(
-        `Promoción no encontrada: ${code} (catálogo admin = HU-026)`,
-      );
-    }
+    const ticketsSubtotal = money(
+      (cart.tickets ?? []).reduce((acc, t) => acc + Number(t.unitPrice), 0),
+    );
+    const snacksSubtotal = money(
+      (cart.snacks ?? []).reduce(
+        (acc, s) => acc + Number(s.unitPrice) * s.quantity,
+        0,
+      ),
+    );
+    const ticketUnitPrices = (cart.tickets ?? []).map((t) => Number(t.unitPrice));
 
+    const ctx = await this.promotionsService.buildCartContext(
+      userId,
+      cart.showtimeId,
+      ticketsSubtotal,
+      snacksSubtotal,
+      ticketUnitPrices,
+    );
+
+    const applied = await this.promotionsService.applyCodeToCart(
+      dto.code,
+      ctx,
+      {
+        code: cart.promoCode,
+        discountAmount: Number(cart.promoDiscountAmount),
+        stackable: cart.promoStackable,
+      },
+    );
+
+    const code = applied.code ?? dto.code.trim().toUpperCase();
     if (cart.promoCode && cart.promoCode !== code) {
-      if (cart.promoStackable === false || !promo.stackable) {
-        throw new ConflictException(
-          'Las promociones no se pueden combinar (RN-048)',
-        );
-      }
       cart.promoDiscountAmount =
-        Number(cart.promoDiscountAmount) + promo.discountAmount;
+        Number(cart.promoDiscountAmount) + applied.discountAmount;
       cart.promoCode = `${cart.promoCode}+${code}`;
-      cart.promoStackable = cart.promoStackable && promo.stackable;
+      cart.promoStackable = Boolean(cart.promoStackable && applied.stackable);
     } else {
       cart.promoCode = code;
-      cart.promoDiscountAmount = promo.discountAmount;
-      cart.promoStackable = promo.stackable;
+      cart.promoDiscountAmount = applied.discountAmount;
+      cart.promoStackable = applied.stackable;
     }
 
     return this.touchAndRespond(cart);
