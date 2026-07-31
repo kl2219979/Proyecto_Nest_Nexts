@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
+import { User } from '../auth/entities/user.entity';
 import { CartModule } from '../cart/cart.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { SeatsModule } from '../seats/seats.module';
 import { SnacksModule } from '../snacks/snacks.module';
 import { TicketsModule } from '../tickets/tickets.module';
@@ -20,7 +22,7 @@ import { PaymentsService } from './payments.service';
  * - `POST/GET /payments` · `GET /payments/:id` (JWT)
  * - `POST /payments/webhook` (firma HMAC)
  *
- * Tras APPROVED delega entradas/factura a `TicketsModule` (HU-014).
+ * Tras APPROVED: tickets/factura (HU-014) + email (HU-015 / RN-064).
  */
 @Module({
   imports: [
@@ -29,12 +31,14 @@ import { PaymentsService } from './payments.service';
     SeatsModule,
     SnacksModule,
     TicketsModule,
+    NotificationsModule,
     TypeOrmModule.forFeature([
       Order,
       OrderTicketItem,
       OrderSnackItem,
       Payment,
       PaymentAudit,
+      User,
     ]),
   ],
   controllers: [PaymentsController],

@@ -8,7 +8,9 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { User } from '../auth/entities/user.entity';
 import { CartService } from '../cart/cart.service';
+import { EmailService } from '../notifications/email.service';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { TicketsService } from '../tickets/tickets.service';
@@ -150,7 +152,13 @@ describe('PaymentsService', () => {
 
   const ticketsService = {
     fulfillPaidOrder: jest.fn().mockResolvedValue({
-      tickets: [{ id: 'tkt-1' }],
+      tickets: [
+        {
+          id: 'tkt-1',
+          movieTitle: 'Demo',
+          startsAt: '2026-08-01T20:00:00.000Z',
+        },
+      ],
       invoice: { id: 'inv-1' },
     }),
   };
@@ -164,11 +172,25 @@ describe('PaymentsService', () => {
     verifyWebhookSignature: jest.fn().mockReturnValue(true),
   };
 
+  const userRepo = {
+    findOne: jest.fn().mockResolvedValue({
+      id: 'user-1',
+      email: 'demo@multicine.test',
+    }),
+  };
+
+  const emailService = {
+    sendPurchaseSuccess: jest.fn().mockResolvedValue({}),
+    sendPaymentRejected: jest.fn().mockResolvedValue({}),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     paymentRepo.findOne.mockResolvedValue(null);
     orderRepo.findOneOrFail = jest.fn().mockImplementation(async () => ({
       id: 'order-1',
+      total: 38080.5,
+      currency: 'COP',
       ticketsGenerated: true,
       invoiceGenerated: true,
       tickets: [],
@@ -190,11 +212,13 @@ describe('PaymentsService', () => {
           provide: getRepositoryToken(OrderSnackItem),
           useValue: snackItemRepo,
         },
+        { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: CartService, useValue: cartService },
         { provide: SeatsService, useValue: seatsService },
         { provide: SnacksService, useValue: snacksService },
         { provide: TicketsService, useValue: ticketsService },
         { provide: PaymentGatewayService, useValue: gateway },
+        { provide: EmailService, useValue: emailService },
       ],
     }).compile();
 

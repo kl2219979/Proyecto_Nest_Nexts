@@ -38,7 +38,8 @@
 | HU-012 Confitería | **Hecho** | GET /snacks · POST/PUT/DELETE /cart/snacks · RN-049…052 |
 | HU-013 Proceso de pago | **Hecho** | POST/GET /payments · webhook HMAC · órdenes · RN-053…056 |
 | HU-014 Entradas + factura | **Hecho** | GET /tickets · GET /invoice/:id · PDF/QR · RN-057…060 |
-| HU-015 … HU-029 | Pendiente | Ver sección 3 |
+| HU-015 Notificaciones email | **Hecho** | Motor correo + historial + prefs · RN-061…064 · cron recordatorios |
+| HU-016 … HU-029 | Pendiente | Ver sección 3 (siguiente: HU-024) |
 
 ### Bitácora de avances
 
@@ -153,6 +154,15 @@
 - `GET /membership.purchaseHistory` lista facturas emitidas.
 - Guía `docs/features/hu-014-tickets-invoice.md`.
 - Email con adjuntos → HU-015; escaneo puerta → HU-024.
+
+#### HU-015 — Notificaciones automáticas por correo
+- Extensión de `notifications/`: `EmailService` + `EmailGatewayService` (Adapter) + plantillas HTML.
+- Entidad `EmailNotification` (historial/outbox); reintentos ×3 (RN-063); prefs marketing/upcoming (RN-062).
+- Endpoints JWT: `GET/POST /notifications/email`, `GET/PUT/POST /notifications/preferences`.
+- Disparos: registro/activación/reset/perfil, compra+factura (RN-064), pago rechazado, estrenos, recordatorios 24h/2h (`@Cron` cada 5 min).
+- `EMAIL_FORCE_FAIL` para simular fallos; envío real = log stub (sustituible por proveedor).
+- Guía `docs/features/hu-015-email-notifications.md`.
+- Push / SMTP productivo / transferencias = fuera de alcance (HUs posteriores).
 
 ---
 
@@ -334,6 +344,7 @@ Health OK
 - HU-012 guía: `docs/features/hu-012-snacks.md`
 - HU-013 guía: `docs/features/hu-013-payments.md`
 - HU-014 guía: `docs/features/hu-014-tickets-invoice.md`
+- HU-015 guía: `docs/features/hu-015-email-notifications.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -347,5 +358,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-015 Notificaciones Automáticas por Correo Electrónico.
+Siguiente: HU-024 Escaneo y Validación de Código QR.
 ```

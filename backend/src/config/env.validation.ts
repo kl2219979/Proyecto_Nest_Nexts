@@ -107,12 +107,20 @@ export class EnvironmentVariables {
   DATABASE_SYNC: boolean = true;
 
   /**
-   * URL pública base para enlaces de activación (correo HU-006).
+   * URL pública base para enlaces de activación / tickets (HU-006 / HU-015).
    * @default http://localhost:3000
    */
   @IsOptional()
   @IsString()
   APP_PUBLIC_URL: string = 'http://localhost:3000';
+
+  /**
+   * Si `true`, el adaptador de correo falla a propósito (probar RN-063).
+   * @default false
+   */
+  @IsOptional()
+  @IsString()
+  EMAIL_FORCE_FAIL?: string;
 
   /**
    * Token CAPTCHA aceptado en desarrollo (sin proveedor externo).

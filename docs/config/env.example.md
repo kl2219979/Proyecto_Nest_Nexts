@@ -75,6 +75,7 @@ docker compose up --build
 | `JWT_SECRET` | `dev-jwt-secret-change-me` | Firma del Access JWT (HU-007) |
 | `PAYMENT_AES_KEY` | 64 hex | AES-256 para payload de pasarela (HU-013) |
 | `PAYMENT_WEBHOOK_SECRET` | `dev-payment-webhook-secret` | HMAC de `x-payment-signature` (HU-013) |
+| `EMAIL_FORCE_FAIL` | `true` / omitir | Simula fallo del adaptador de correo (HU-015 / RN-063) |
 
 ## El detalle que más confunde: `DATABASE_HOST`
 

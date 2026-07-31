@@ -23,7 +23,7 @@ GET  /invoice/:id          → factura asociada
 GET  /invoice/:id/pdf      → PDF del comprobante
 ```
 
-Escaneo en puerta (`USED`) = **HU-024**. Envío por correo = **HU-015**.
+Escaneo en puerta (`USED`) = **HU-024**. Correo con enlaces a PDF = **HU-015** (hecho).
 
 ## Endpoints
 

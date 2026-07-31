@@ -10,6 +10,7 @@ import { City } from '../locations/entities/city.entity';
 import { Movie } from '../movies/entities/movie.entity';
 import { MovieStatus } from '../movies/enums/movie.enums';
 import { SubscribeUpcomingDto } from './dto/subscribe-upcoming.dto';
+import { EmailService } from './email.service';
 import {
   UpcomingNotification,
   UpcomingNotificationStatus,
@@ -37,11 +38,10 @@ export type UpcomingDispatchResult = {
 };
 
 /**
- * Suscripciones a avisos de próximos estrenos (HU-005).
+ * Suscripciones a avisos de próximos estrenos (HU-005) + envío HU-015.
  *
  * Controller → Service → Repository.
- * El correo real se implementa en HU-015; aquí se registra la solicitud
- * y se marca como enviada cuando la película pasa a `NOW_SHOWING`.
+ * Al pasar a `NOW_SHOWING` encola correo `UPCOMING_RELEASE` (respeta prefs).
  */
 @Injectable()
 export class NotificationsService {
@@ -49,8 +49,9 @@ export class NotificationsService {
 
   /**
    * @param notificationRepo - Solicitudes de aviso.
-   * @param movieRepo - Valida película en estado UPCOMING.
+   * @param movieRepo - Valida película UPCOMING / título.
    * @param cityRepo - Valida ciudad de contexto.
+   * @param emailService - Motor de correo (HU-015).
    */
   constructor(
     @InjectRepository(UpcomingNotification)
@@ -59,13 +60,14 @@ export class NotificationsService {
     private readonly movieRepo: Repository<Movie>,
     @InjectRepository(City)
     private readonly cityRepo: Repository<City>,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
    * Registra “Notificarme cuando esté disponible” (RN-019).
    *
    * @param dto - userId, email, movieId, cityId.
-   * @returns {Promise<UpcomingSubscriptionResult>} Solicitud creada.
+   * @returns Solicitud creada.
    * @throws {NotFoundException} Película/ciudad inválidas o no UPCOMING.
    * @throws {ConflictException} Ya existe aviso para ese usuario + película.
    */
@@ -123,11 +125,10 @@ export class NotificationsService {
   /**
    * Dispara avisos pendientes cuando la película entra a cartelera (RN-020).
    *
-   * Marca solicitudes `PENDING` → `SENT`. El motor de email (HU-015)
-   * consumirá estos registros; aquí dejamos traza en log.
+   * Marca solicitudes `PENDING` → `SENT` y encola correo `UPCOMING_RELEASE`.
    *
    * @param movieId - Película que acaba de pasar a `NOW_SHOWING`.
-   * @returns {Promise<UpcomingDispatchResult>} Cantidad de avisos disparados.
+   * @returns Cantidad de avisos disparados.
    */
   async dispatchUpcomingForMovie(
     movieId: string,
@@ -143,13 +144,27 @@ export class NotificationsService {
       return { movieId, notifiedCount: 0 };
     }
 
+    const movie = await this.movieRepo.findOne({ where: { id: movieId } });
+    const movieTitle = movie?.title ?? 'Película';
+
     const now = new Date();
     for (const row of pending) {
       row.status = UpcomingNotificationStatus.SENT;
       row.notifiedAt = now;
-      this.logger.log(
-        `RN-020 aviso estreno → user=${row.userId} email=${row.email} movie=${movieId} city=${row.cityId}`,
-      );
+      try {
+        await this.emailService.sendUpcomingRelease({
+          userId: row.userId,
+          email: row.email,
+          movieId,
+          movieTitle,
+          cityId: row.cityId,
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(
+          `No se pudo enviar aviso estreno user=${row.userId}: ${msg}`,
+        );
+      }
     }
     await this.notificationRepo.save(pending);
 

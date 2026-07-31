@@ -18,7 +18,7 @@ import { TicketsService } from './tickets.service';
  * - `GET /invoice/:id` · `GET /invoice/:id/pdf`
  *
  * Generación automática al webhook APPROVED vía `fulfillPaidOrder`.
- * Escaneo en puerta = HU-024; email con adjuntos = HU-015.
+ * Escaneo en puerta = HU-024; email con enlaces = HU-015 (integrado en Payments).
  */
 @Module({
   imports: [

@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Cinema } from '../locations/entities/cinema.entity';
 import { City } from '../locations/entities/city.entity';
 import { MembershipModule } from '../membership/membership.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CaptchaService } from './captcha/captcha.service';
@@ -35,6 +36,7 @@ import { OptionalJwtAuthGuard } from './jwt/optional-jwt-auth.guard';
       Cinema,
     ]),
     forwardRef(() => MembershipModule),
+    forwardRef(() => NotificationsModule),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     /**
      * JwtModule asíncrono: lee `JWT_SECRET` del entorno.

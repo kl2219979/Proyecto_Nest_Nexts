@@ -8,7 +8,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -21,6 +20,7 @@ import {
   MembershipStatus,
 } from '../membership/enums/membership.enums';
 import { MembershipService } from '../membership/membership.service';
+import { EmailService } from '../notifications/email.service';
 import { AuthService } from './auth.service';
 import { CaptchaService } from './captcha/captcha.service';
 import { LoginAudit } from './entities/login-audit.entity';
@@ -58,8 +58,11 @@ describe('AuthService', () => {
   const jwtService = {
     signAsync: jest.fn(() => Promise.resolve('access.jwt.token')),
   };
-  const configService = {
-    get: jest.fn((_key: string, fallback?: string) => fallback),
+  const emailService = {
+    sendAccountActivation: jest.fn().mockResolvedValue({}),
+    sendAccountActivated: jest.fn().mockResolvedValue({}),
+    sendPasswordReset: jest.fn().mockResolvedValue({}),
+    sendPasswordChanged: jest.fn().mockResolvedValue({}),
   };
   const manager = {
     create: jest.fn((_entity: unknown, data: unknown) => data),
@@ -146,8 +149,8 @@ describe('AuthService', () => {
         { provide: MembershipService, useValue: membershipService },
         { provide: CaptchaService, useValue: captchaService },
         { provide: JwtService, useValue: jwtService },
-        { provide: ConfigService, useValue: configService },
         { provide: DataSource, useValue: dataSource },
+        { provide: EmailService, useValue: emailService },
       ],
     }).compile();
 

@@ -6,7 +6,6 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DocumentType, Gender } from '../auth/enums/user.enums';
@@ -15,6 +14,7 @@ import { UserProfile } from '../auth/entities/user-profile.entity';
 import { User } from '../auth/entities/user.entity';
 import { Cinema } from '../locations/entities/cinema.entity';
 import { City } from '../locations/entities/city.entity';
+import { EmailService } from '../notifications/email.service';
 import { ProfileService } from './profile.service';
 
 describe('ProfileService', () => {
@@ -68,8 +68,9 @@ describe('ProfileService', () => {
   const cinemaRepo = {
     findOne: jest.fn(),
   };
-  const configService = {
-    get: jest.fn((_key: string, fallback: string) => fallback),
+  const emailService = {
+    sendEmailReverification: jest.fn().mockResolvedValue({}),
+    sendProfileUpdated: jest.fn().mockResolvedValue({}),
   };
 
   /**
@@ -95,7 +96,7 @@ describe('ProfileService', () => {
         },
         { provide: getRepositoryToken(City), useValue: cityRepo },
         { provide: getRepositoryToken(Cinema), useValue: cinemaRepo },
-        { provide: ConfigService, useValue: configService },
+        { provide: EmailService, useValue: emailService },
       ],
     }).compile();
 

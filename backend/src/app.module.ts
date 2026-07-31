@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
@@ -95,11 +96,14 @@ import { TicketsModule } from './tickets/tickets.module';
       },
     ]),
 
+    /** Cron de recordatorios de función (HU-015). */
+    ScheduleModule.forRoot(),
+
     /** Health check (HU-001). */
     HealthModule,
     /** Catálogo geográfico País → Departamento → Ciudad (HU-002). */
     LocationsModule,
-    /** Avisos de estreno (HU-005); también importado por MoviesModule. */
+    /** Avisos de estreno + motor de correo (HU-005 / HU-015). */
     NotificationsModule,
     /** Cartelera, detalle y próximos estrenos (HU-003 / HU-004 / HU-005). */
     MoviesModule,

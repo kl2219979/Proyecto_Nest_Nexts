@@ -6,6 +6,7 @@ import { UserProfile } from '../auth/entities/user-profile.entity';
 import { User } from '../auth/entities/user.entity';
 import { Cinema } from '../locations/entities/cinema.entity';
 import { City } from '../locations/entities/city.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 
@@ -24,6 +25,7 @@ import { ProfileService } from './profile.service';
       Cinema,
     ]),
     AuthModule,
+    NotificationsModule,
   ],
   controllers: [ProfileController],
   providers: [ProfileService],

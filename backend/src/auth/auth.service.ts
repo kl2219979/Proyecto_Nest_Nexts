@@ -2,12 +2,13 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
   UnauthorizedException,
+  forwardRef,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -19,6 +20,7 @@ import {
   MembershipResult,
   MembershipService,
 } from '../membership/membership.service';
+import { EmailService } from '../notifications/email.service';
 import { CaptchaService } from './captcha/captcha.service';
 import { ActivateAccountDto } from './dto/activate-account.dto';
 import { ClientContext, LoginDto } from './dto/login.dto';
@@ -127,8 +129,8 @@ export class AuthService {
    * @param membershipService - Membresía + wallet.
    * @param captchaService - CAPTCHA del registro.
    * @param jwtService - Firma Access JWT.
-   * @param configService - Secretos y URLs públicas.
    * @param dataSource - Transacciones.
+   * @param emailService - Correos de activación / reset (HU-015).
    */
   constructor(
     @InjectRepository(User)
@@ -146,8 +148,9 @@ export class AuthService {
     private readonly membershipService: MembershipService,
     private readonly captchaService: CaptchaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
+    @Inject(forwardRef(() => EmailService))
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -250,7 +253,12 @@ export class AuthService {
       },
     );
 
-    this.dispatchActivationEmail(user.email, activationToken);
+    void this.emailService
+      .sendAccountActivation(user.id, user.email, activationToken)
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Fallo correo activación: ${msg}`);
+      });
 
     return {
       userId: user.id,
@@ -302,6 +310,13 @@ export class AuthService {
     user.activationToken = null;
     user.activationTokenExpiresAt = null;
     await this.userRepo.save(user);
+
+    void this.emailService
+      .sendAccountActivated(user.id, user.email)
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Fallo correo cuenta activada: ${msg}`);
+      });
 
     return {
       userId: user.id,
@@ -415,7 +430,12 @@ export class AuthService {
         Date.now() + PASSWORD_RESET_TTL_MS,
       );
       await this.userRepo.save(user);
-      this.dispatchPasswordResetEmail(email, token);
+      void this.emailService
+        .sendPasswordReset(user.id, email, token)
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Fallo correo reset password: ${msg}`);
+        });
     }
 
     return {
@@ -453,6 +473,13 @@ export class AuthService {
     await this.userRepo.save(user);
 
     await this.revokeActiveRefreshTokens(user.id);
+
+    void this.emailService
+      .sendPasswordChanged(user.id, user.email)
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`Fallo correo password changed: ${msg}`);
+      });
 
     return { message: 'Contraseña actualizada correctamente' };
   }
@@ -646,37 +673,4 @@ export class AuthService {
     return createHash('sha256').update(raw).digest('hex');
   }
 
-  /**
-   * Log del correo de activación (HU-015 enviará el real).
-   *
-   * @param email - Destinatario.
-   * @param token - Token de activación.
-   */
-  private dispatchActivationEmail(email: string, token: string): void {
-    const baseUrl = this.configService.get<string>(
-      'APP_PUBLIC_URL',
-      'http://localhost:3000',
-    );
-    const link = `${baseUrl}/api/v1/auth/activate?token=${token}`;
-    this.logger.log(
-      `Correo de activación (HU-006 → HU-015) → email=${email} link=${link}`,
-    );
-  }
-
-  /**
-   * Log del correo de reset de contraseña (HU-015 enviará el real).
-   *
-   * @param email - Destinatario.
-   * @param token - Token de reset.
-   */
-  private dispatchPasswordResetEmail(email: string, token: string): void {
-    const baseUrl = this.configService.get<string>(
-      'APP_PUBLIC_URL',
-      'http://localhost:3000',
-    );
-    const link = `${baseUrl}/api/v1/auth/reset-password?token=${token}`;
-    this.logger.log(
-      `Correo reset password (HU-007 → HU-015) → email=${email} link=${link}`,
-    );
-  }
 }

@@ -7,6 +7,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { City } from '../locations/entities/city.entity';
 import { Movie } from '../movies/entities/movie.entity';
 import { MovieStatus } from '../movies/enums/movie.enums';
+import { EmailService } from './email.service';
 import {
   UpcomingNotification,
   UpcomingNotificationStatus,
@@ -28,6 +29,9 @@ describe('NotificationsService', () => {
   const cityRepo = {
     findOne: jest.fn(),
   };
+  const emailService = {
+    sendUpcomingRelease: jest.fn().mockResolvedValue({}),
+  };
 
   /**
    * Arma el módulo de testing.
@@ -46,6 +50,7 @@ describe('NotificationsService', () => {
         },
         { provide: getRepositoryToken(Movie), useValue: movieRepo },
         { provide: getRepositoryToken(City), useValue: cityRepo },
+        { provide: EmailService, useValue: emailService },
       ],
     }).compile();
 
@@ -163,6 +168,7 @@ describe('NotificationsService', () => {
     ];
     notificationRepo.find.mockResolvedValue(pending);
     notificationRepo.save.mockResolvedValue(pending);
+    movieRepo.findOne.mockResolvedValue({ id: 'm-1', title: 'Estreno Demo' });
 
     const result = await service.dispatchUpcomingForMovie('m-1');
 
@@ -170,5 +176,6 @@ describe('NotificationsService', () => {
     expect(pending[0].status).toBe(UpcomingNotificationStatus.SENT);
     expect(pending[0].notifiedAt).toBeInstanceOf(Date);
     expect(notificationRepo.save).toHaveBeenCalledWith(pending);
+    expect(emailService.sendUpcomingRelease).toHaveBeenCalledTimes(2);
   });
 });

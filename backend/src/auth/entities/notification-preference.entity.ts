@@ -8,10 +8,11 @@ import {
 import { User } from './user.entity';
 
 /**
- * Preferencias de notificación del usuario (HU-006).
+ * Preferencias de notificación del usuario (HU-006 / HU-015).
  *
- * Se crean vacías/con defaults al registrar.
- * El motor de correo real es HU-015; aquí solo persistimos la preferencia.
+ * Se crean con defaults al registrar.
+ * RN-062: marketing/upcoming son opt-out; los correos transaccionales
+ * obligatorios (compra, activación, reset…) siempre se envían.
  */
 @Entity('notification_preferences')
 export class NotificationPreference {

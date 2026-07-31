@@ -3,14 +3,17 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { In, Repository } from 'typeorm';
+import { User } from '../auth/entities/user.entity';
 import { CartService, CART_TTL_MS } from '../cart/cart.service';
 import type { CartResponse } from '../cart/dto/cart-response';
+import { EmailService } from '../notifications/email.service';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { TicketsService } from '../tickets/tickets.service';
@@ -38,7 +41,7 @@ import { PaymentGatewayService } from './payment-gateway.service';
  * Proceso de pago seguro (HU-013).
  *
  * Flujo: validar carrito/sillas → orden → cobro cifrado → webhook →
- * sillas SOLD + stock − + tickets/factura (HU-014).
+ * sillas SOLD + stock − + tickets/factura (HU-014) + email (HU-015 / RN-064).
  *
  * RN-053 no confirmar sin pasarela · RN-054 liberar si falla ·
  * RN-055 auditoría · RN-056 idempotencia / no duplicar reserva.
@@ -47,17 +50,21 @@ import { PaymentGatewayService } from './payment-gateway.service';
  */
 @Injectable()
 export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
   /**
    * @param orderRepo - Órdenes de venta.
    * @param paymentRepo - Intentos de cobro.
    * @param auditRepo - Auditoría RN-055.
    * @param ticketItemRepo - Snapshot entradas.
    * @param snackItemRepo - Snapshot snacks.
+   * @param userRepo - Email del comprador (HU-015).
    * @param cartService - Carrito ACTIVE → CHECKOUT → COMPLETED.
    * @param seatsService - Revalidación y venta de sillas.
    * @param snacksService - Descuento de inventario (RN-052).
    * @param ticketsService - Entradas PDF/QR + factura (HU-014).
    * @param gateway - Adapter AES + firma webhook.
+   * @param emailService - Correo compra / rechazo (HU-015).
    */
   constructor(
     @InjectRepository(Order)
@@ -70,11 +77,14 @@ export class PaymentsService {
     private readonly ticketItemRepo: Repository<OrderTicketItem>,
     @InjectRepository(OrderSnackItem)
     private readonly snackItemRepo: Repository<OrderSnackItem>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly cartService: CartService,
     private readonly seatsService: SeatsService,
     private readonly snacksService: SnacksService,
     private readonly ticketsService: TicketsService,
     private readonly gateway: PaymentGatewayService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -377,7 +387,7 @@ export class PaymentsService {
     await this.orderRepo.save(order);
 
     /** HU-014: entradas digitales + factura electrónica. */
-    await this.ticketsService.fulfillPaidOrder(order.id);
+    const docs = await this.ticketsService.fulfillPaidOrder(order.id);
     const refreshedOrder = await this.orderRepo.findOneOrFail({
       where: { id: order.id },
       relations: { tickets: true, snacks: true },
@@ -391,6 +401,9 @@ export class PaymentsService {
       ticketsGenerated: refreshedOrder.ticketsGenerated,
       invoiceGenerated: refreshedOrder.invoiceGenerated,
     });
+
+    /** HU-015 / RN-064: correo inmediato con enlaces a entradas y factura. */
+    await this.dispatchPurchaseEmail(payment.userId, refreshedOrder, docs);
   }
 
   /**
@@ -419,6 +432,47 @@ export class PaymentsService {
     await this.audit(payment.id, payment.orderId, PaymentAuditEvent.REJECTED, {
       amount: payment.amount,
     });
+
+    const user = await this.userRepo.findOne({
+      where: { id: payment.userId },
+    });
+    if (user) {
+      void this.emailService
+        .sendPaymentRejected(user.id, user.email, payment.orderId)
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Fallo correo pago rechazado: ${msg}`);
+        });
+    }
+  }
+
+  /**
+   * Envía correo de compra exitosa con enlaces seguros (RN-064).
+   */
+  private async dispatchPurchaseEmail(
+    userId: string,
+    order: Order,
+    docs: { invoice: { id: string }; tickets: { movieTitle: string; startsAt: string }[] },
+  ): Promise<void> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      return;
+    }
+    const first = docs.tickets[0];
+    try {
+      await this.emailService.sendPurchaseSuccess({
+        userId,
+        email: user.email,
+        orderId: order.id,
+        invoiceId: docs.invoice.id,
+        movieTitle: first?.movieTitle ?? 'Multicine',
+        startsAt: first?.startsAt ?? '',
+        total: `${Number(order.total).toFixed(2)} ${order.currency}`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Fallo correo compra exitosa: ${msg}`);
+    }
   }
 
   /**

@@ -5,7 +5,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { Repository } from 'typeorm';
@@ -15,6 +14,7 @@ import { UserProfile } from '../auth/entities/user-profile.entity';
 import { User } from '../auth/entities/user.entity';
 import { Cinema } from '../locations/entities/cinema.entity';
 import { City } from '../locations/entities/city.entity';
+import { EmailService } from '../notifications/email.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 /** Vigencia del token de re-activación tras cambio de email (RN-034). */
@@ -69,7 +69,7 @@ export class ProfileService {
    * @param prefsRepo - Preferencias de notificación.
    * @param cityRepo - Valida ciudad activa.
    * @param cinemaRepo - Valida complejo favorito.
-   * @param configService - `APP_PUBLIC_URL` para el enlace de re-activación.
+   * @param emailService - Correos de perfil / re-verificación (HU-015).
    */
   constructor(
     @InjectRepository(User)
@@ -82,7 +82,7 @@ export class ProfileService {
     private readonly cityRepo: Repository<City>,
     @InjectRepository(Cinema)
     private readonly cinemaRepo: Repository<Cinema>,
-    private readonly configService: ConfigService,
+    private readonly emailService: EmailService,
   ) {}
 
   /**
@@ -145,7 +145,12 @@ export class ProfileService {
           Date.now() + ACTIVATION_TTL_MS,
         );
         emailReverificationRequired = true;
-        this.dispatchEmailReverification(newEmail, activationToken);
+        void this.emailService
+          .sendEmailReverification(userId, newEmail, activationToken)
+          .catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : String(err);
+            this.logger.warn(`Fallo correo re-verificación: ${msg}`);
+          });
       }
     }
 
@@ -191,6 +196,15 @@ export class ProfileService {
     await this.userRepo.save(user);
     await this.profileRepo.save(profile);
     await this.prefsRepo.save(prefs);
+
+    if (!emailReverificationRequired) {
+      void this.emailService
+        .sendProfileUpdated(userId, user.email)
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          this.logger.warn(`Fallo correo perfil actualizado: ${msg}`);
+        });
+    }
 
     const result = this.toResult(user, profile, prefs);
     return {
@@ -266,23 +280,6 @@ export class ProfileService {
         );
       }
     }
-  }
-
-  /**
-   * Log del correo de re-verificación (motor real = HU-015).
-   *
-   * @param email - Nuevo correo.
-   * @param token - Token de activación.
-   */
-  private dispatchEmailReverification(email: string, token: string): void {
-    const baseUrl = this.configService.get<string>(
-      'APP_PUBLIC_URL',
-      'http://localhost:3000',
-    );
-    const link = `${baseUrl}/api/v1/auth/activate?token=${token}`;
-    this.logger.log(
-      `Correo re-verificación email (HU-008 → HU-015) → email=${email} link=${link}`,
-    );
   }
 
   /**
