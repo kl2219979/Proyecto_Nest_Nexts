@@ -126,6 +126,13 @@ export class Promotion {
   @Column({ type: 'varchar', length: 10, nullable: true })
   format!: MovieFormat | null;
 
+  /**
+   * Scope opcional: función concreta (HU-019 Cine Flash).
+   * Si está definido, la promo solo aplica a ese showtime.
+   */
+  @Column({ type: 'uuid', nullable: true })
+  showtimeId!: string | null;
+
   /** Aplica sobre entradas. */
   @Column({ type: 'boolean', default: true })
   appliesToTickets!: boolean;

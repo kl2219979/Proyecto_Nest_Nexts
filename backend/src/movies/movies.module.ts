@@ -1,6 +1,7 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { InjectDataSource, TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { CineflashModule } from '../cineflash/cineflash.module';
 import { City } from '../locations/entities/city.entity';
 import { Cinema } from '../locations/entities/cinema.entity';
 import { LocationsModule } from '../locations/locations.module';
@@ -20,15 +21,17 @@ import { seedMovies } from './movies.seed';
 
 /**
  * Módulo de películas: cartelera (HU-003) + detalle (HU-004) + estrenos (HU-005)
- * + selección de función/precios (HU-009).
+ * + selección de función/precios (HU-009) + listado Cine Flash (HU-019).
  *
- * Importa `LocationsModule` (seed geo) y `NotificationsModule` (RN-020).
+ * Importa `LocationsModule` (seed geo), `NotificationsModule` (RN-020)
+ * y `CineflashModule` (`GET /movies/cineflash`).
  */
 @Module({
   imports: [
     LocationsModule,
     NotificationsModule,
     PromotionsModule,
+    CineflashModule,
     TypeOrmModule.forFeature([
       Movie,
       Genre,

@@ -24,6 +24,7 @@ import { TicketsModule } from './tickets/tickets.module';
 import { TransferModule } from './transfer/transfer.module';
 import { GiftcardsModule } from './giftcards/giftcards.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
+import { CineflashModule } from './cineflash/cineflash.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -139,6 +140,8 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
     LoyaltyModule,
     /** Promociones y cupones (HU-026). */
     PromotionsModule,
+    /** Cine Flash automático (HU-019). */
+    CineflashModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */
     AdminModule,
   ],

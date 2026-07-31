@@ -69,6 +69,8 @@ describe('CartService', () => {
   const promotionsService = {
     buildCartContext: jest.fn(),
     applyCodeToCart: jest.fn(),
+    findActiveCineFlashForShowtime: jest.fn().mockResolvedValue(null),
+    calculateDiscount: jest.fn().mockReturnValue(0),
   };
   const giftcardsService = {
     previewForCart: jest.fn(),

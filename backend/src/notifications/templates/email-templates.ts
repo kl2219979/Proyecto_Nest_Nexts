@@ -274,6 +274,26 @@ ${link(String(ctx.ticketsUrl ?? '#'), 'Ver mis entradas')}`;
 ${link(String(ctx.acceptUrl ?? '#'), 'Aceptar transferencia')}`;
       }
 
+      case EmailTemplate.CINE_FLASH: {
+        const movie = String(ctx.movieTitle ?? 'una película');
+        const pct = String(ctx.discountPercent ?? 20);
+        const flash = String(ctx.flashPrice ?? '');
+        const base = String(ctx.basePrice ?? '');
+        const maxTickets = String(ctx.maxTickets ?? 3);
+        return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p>🔥 <strong>Cine Flash</strong> activado: <strong>${this.escape(pct)}% OFF</strong> en entradas de <strong>${this.escape(movie)}</strong>.</p>
+<ul>
+  <li><strong>Horario:</strong> ${this.escape(String(ctx.startsAt ?? ''))}</li>
+  <li><strong>Complejo:</strong> ${this.escape(String(ctx.cinemaName ?? ''))}</li>
+  <li><strong>Sala:</strong> ${this.escape(String(ctx.roomName ?? ''))}</li>
+  <li><strong>Precio:</strong> $${this.escape(base)} → $${this.escape(flash)} COP</li>
+  <li><strong>Máximo:</strong> ${this.escape(maxTickets)} entradas · solo entradas · no acumulable</li>
+</ul>
+<p>Solo por tiempo limitado — hasta que inicie la función o se llene la sala.</p>
+${link(String(ctx.cineflashUrl ?? '#'), 'Ver Cine Flash')}
+${link(String(ctx.movieUrl ?? '#'), 'Ver película')}`;
+      }
+
       case EmailTemplate.GIFTCARD: {
         const code = String(ctx.code ?? '');
         const value = String(ctx.faceValue ?? '');

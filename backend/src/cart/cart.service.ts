@@ -186,6 +186,8 @@ export class CartService {
       expiresAt,
     );
 
+    await this.syncCineFlashPromo(saved);
+    await this.cartRepo.save(saved);
     return this.toResponse(saved, userId);
   }
 
@@ -682,6 +684,7 @@ export class CartService {
     const now = new Date();
     cart.lastActivityAt = now;
     cart.expiresAt = new Date(now.getTime() + CART_TTL_MS);
+    await this.syncCineFlashPromo(cart);
     const saved = await this.cartRepo.save(cart);
     await this.seatsService.extendReservationExpiry(
       saved.userId,
@@ -689,6 +692,55 @@ export class CartService {
       saved.expiresAt,
     );
     return this.toResponse(saved, saved.userId);
+  }
+
+  /**
+   * Auto-aplica Cine Flash (HU-019) si la función tiene promo activa.
+   *
+   * RN-082 solo entradas · RN-083 no acumulable: no pisa un cupón
+   * manual distinto; limpia el descuento flash si ya no está vigente.
+   *
+   * @param cart - Carrito ACTIVE (mutado in-place).
+   */
+  private async syncCineFlashPromo(cart: Cart): Promise<void> {
+    const flash =
+      await this.promotionsService.findActiveCineFlashForShowtime(
+        cart.showtimeId,
+      );
+    const isFlashCode = (code: string | null) =>
+      Boolean(code && code.startsWith('FLASH-'));
+
+    if (!flash) {
+      if (isFlashCode(cart.promoCode)) {
+        cart.promoCode = null;
+        cart.promoDiscountAmount = 0;
+        cart.promoStackable = null;
+      }
+      return;
+    }
+
+    if (cart.promoCode && !isFlashCode(cart.promoCode)) {
+      return;
+    }
+
+    const ticketsSubtotal = money(
+      (cart.tickets ?? []).reduce((acc, t) => acc + Number(t.unitPrice), 0),
+    );
+    if (ticketsSubtotal <= 0) {
+      return;
+    }
+
+    const discount = this.promotionsService.calculateDiscount(flash, {
+      userId: cart.userId,
+      ticketsSubtotal,
+      snacksSubtotal: 0,
+      ticketUnitPrices: (cart.tickets ?? []).map((t) => Number(t.unitPrice)),
+      showtimeId: cart.showtimeId,
+    });
+
+    cart.promoCode = flash.code;
+    cart.promoDiscountAmount = discount;
+    cart.promoStackable = false;
   }
 
   /**

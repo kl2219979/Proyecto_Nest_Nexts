@@ -46,7 +46,8 @@
 | HU-017 Transferencia entradas | **Hecho** | POST/GET /tickets/transfer · accept · invite · RN-071…075 |
 | HU-018 Bonos de regalo | **Hecho** | POST/GET /giftcards · redeem · webhook · cart apply · RN-076…079 |
 | HU-023 Fidelización / puntos | **Hecho** | GET/POST /points · levels · cart apply · earn/redeem · RN-099…101 |
-| HU-019 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-019) |
+| HU-019 Cine Flash | **Hecho** | Cron 5 min · POST /cineflash/process · GET /movies/cineflash · RN-080…086 |
+| HU-021 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-021) |
 
 ### Bitácora de avances
 
@@ -234,6 +235,16 @@
 - `GET /membership.pointsHistory` deja de ser stub; seed `BLACK30` demo incompatible.
 - Guía `docs/features/hu-023-loyalty.md`.
 - Cine Flash → HU-019.
+
+#### HU-019 — Cine Flash (Promoción Inteligente Automática)
+- Módulo `backend/src/cineflash/`: `CineflashService` + cron 5 min + auditoría `cineflash_audits`.
+- Endpoints: `POST /cineflash/process` (ADMIN), `GET /movies/cineflash` (público).
+- RN-080 ventana ~1 h · ocupación &lt; 60% → promo `CINE_FLASH` 20% OFF (scope `showtimeId`).
+- RN-081 máx. 3 entradas (`maxSeatsPerOrder`) · RN-082 solo tickets · RN-083 no apilable.
+- RN-084 apaga al iniciar/llenar · RN-085 auditoría · RN-086 email marketing + push stub.
+- Carrito auto-aplica `FLASH-*`; precios de función vía motor HU-026.
+- Guía `docs/features/hu-019-cineflash.md`.
+- Chatbot IA → HU-021.
 
 ---
 
@@ -423,6 +434,7 @@ Health OK
 - HU-017 guía: `docs/features/hu-017-transfer.md`
 - HU-018 guía: `docs/features/hu-018-giftcards.md`
 - HU-023 guía: `docs/features/hu-023-loyalty.md`
+- HU-019 guía: `docs/features/hu-019-cineflash.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -436,5 +448,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-019 Cine Flash (Promoción Inteligente Automática).
+Siguiente: HU-021 Chatbot Inteligente para Recomendación de Películas.
 ```

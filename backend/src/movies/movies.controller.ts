@@ -5,6 +5,8 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import { CineflashService } from '../cineflash/cineflash.service';
+import { CineFlashListResponse } from '../cineflash/dto/cineflash-response';
 import { BillboardQueryDto } from './dto/billboard-query.dto';
 import { BillboardResponse } from './dto/billboard-response';
 import { MovieDetailQueryDto } from './dto/movie-detail-query.dto';
@@ -20,18 +22,19 @@ import { MoviesService } from './movies.service';
 import { ShowtimesService } from './showtimes.service';
 
 /**
- * Endpoints de cartelera (HU-003), detalle (HU-004), estrenos (HU-005)
- * y selección de función (HU-009).
+ * Endpoints de cartelera (HU-003), detalle (HU-004), estrenos (HU-005),
+ * selección de función (HU-009) y Cine Flash (HU-019).
  *
  * Rutas finales (con prefijo global):
  * - `GET /api/v1/movies`
  * - `GET /api/v1/movies/today`
  * - `GET /api/v1/movies/upcoming`
+ * - `GET /api/v1/movies/cineflash`
  * - `GET /api/v1/movies/:id`
  * - `GET /api/v1/movies/:id/recommendations`
  * - `GET /api/v1/movies/:id/functions`
  *
- * Orden de declaración: rutas estáticas (`today`, `upcoming`) y
+ * Orden de declaración: rutas estáticas (`today`, `upcoming`, `cineflash`) y
  * subrutas (`recommendations`, `functions`) antes de `:id`.
  */
 @ApiTags('Movies')
@@ -40,10 +43,12 @@ export class MoviesController {
   /**
    * @param moviesService - Cartelera, detalle y estrenos.
    * @param showtimesService - Selección de función (HU-009).
+   * @param cineflashService - Listado Cine Flash (HU-019).
    */
   constructor(
     private readonly moviesService: MoviesService,
     private readonly showtimesService: ShowtimesService,
+    private readonly cineflashService: CineflashService,
   ) {}
 
   /**
@@ -84,6 +89,27 @@ export class MoviesController {
     @Query() query: UpcomingQueryDto,
   ): Promise<UpcomingMoviesResponse> {
     return this.moviesService.getUpcoming(query);
+  }
+
+  /**
+   * Funciones con Cine Flash activo (HU-019).
+   *
+   * Declarada antes de `:id` para que Nest no trate `cineflash` como UUID.
+   *
+   * @param cityId - Filtro opcional por ciudad del complejo.
+   * @returns Funciones en flash (20% OFF, máx. 3 entradas).
+   */
+  @Get('cineflash')
+  @ApiOperation({
+    summary: 'Funciones con Cine Flash activo',
+    description:
+      'RN-080…084: 20% OFF entradas · máx. 3 · no acumulable · vigencia hasta inicio o sala llena.',
+  })
+  @ApiOkResponse({ description: 'Listado de funciones en Cine Flash' })
+  getCineFlash(
+    @Query('cityId') cityId?: string,
+  ): Promise<CineFlashListResponse> {
+    return this.cineflashService.listActive(cityId);
   }
 
   /**

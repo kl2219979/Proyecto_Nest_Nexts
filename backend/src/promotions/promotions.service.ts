@@ -161,6 +161,7 @@ export class PromotionsService {
       movieId: dto.movieId ?? null,
       genreId: dto.genreId ?? null,
       format: dto.format ?? null,
+      showtimeId: dto.showtimeId ?? null,
       appliesToTickets: dto.appliesToTickets ?? true,
       appliesToSnacks: dto.appliesToSnacks ?? false,
       minMembershipLevel: dto.minMembershipLevel ?? null,
@@ -226,6 +227,7 @@ export class PromotionsService {
     if (dto.movieId !== undefined) promo.movieId = dto.movieId;
     if (dto.genreId !== undefined) promo.genreId = dto.genreId;
     if (dto.format !== undefined) promo.format = dto.format;
+    if (dto.showtimeId !== undefined) promo.showtimeId = dto.showtimeId;
     if (dto.appliesToTickets !== undefined) {
       promo.appliesToTickets = dto.appliesToTickets;
     }
@@ -386,6 +388,7 @@ export class PromotionsService {
       movieId: showtime.movieId,
       genreIds,
       format: showtime.format,
+      showtimeId: showtime.id,
     };
 
     const views: FunctionPromotionView[] = [];
@@ -463,6 +466,7 @@ export class PromotionsService {
       movieId: showtime.movieId,
       genreIds: (showtime.movie.genres ?? []).map((g) => g.id),
       format: showtime.format,
+      showtimeId: showtime.id,
       membershipLevel: membership?.level ?? null,
       birthDate: profile?.birthDate ?? null,
     };
@@ -617,6 +621,7 @@ export class PromotionsService {
     promo: Promotion,
     ctx: PromoEvaluationContext,
   ): boolean {
+    if (promo.showtimeId && promo.showtimeId !== ctx.showtimeId) return false;
     if (promo.cityId && promo.cityId !== ctx.cityId) return false;
     if (promo.cinemaId && promo.cinemaId !== ctx.cinemaId) return false;
     if (promo.roomId && promo.roomId !== ctx.roomId) return false;
@@ -779,6 +784,28 @@ export class PromotionsService {
   }
 
   /**
+   * Promo Cine Flash activa para una función (HU-019).
+   *
+   * Usado por el carrito para auto-aplicar el 20% OFF (RN-082/083).
+   *
+   * @param showtimeId - UUID de la función.
+   * @returns Promo vigente o `null`.
+   */
+  async findActiveCineFlashForShowtime(
+    showtimeId: string,
+  ): Promise<Promotion | null> {
+    const now = new Date();
+    return this.promoRepo
+      .createQueryBuilder('p')
+      .where('p.type = :type', { type: PromotionType.CINE_FLASH })
+      .andWhere('p.showtimeId = :showtimeId', { showtimeId })
+      .andWhere('p.isActive = true')
+      .andWhere('p.startsAt <= :now', { now })
+      .andWhere('p.endsAt >= :now', { now })
+      .getOne();
+  }
+
+  /**
    * @param promo - Entidad.
    * @returns DTO de respuesta.
    */
@@ -804,6 +831,7 @@ export class PromotionsService {
       movieId: promo.movieId,
       genreId: promo.genreId,
       format: promo.format as MovieFormat | null,
+      showtimeId: promo.showtimeId,
       appliesToTickets: promo.appliesToTickets,
       appliesToSnacks: promo.appliesToSnacks,
       minMembershipLevel: promo.minMembershipLevel,

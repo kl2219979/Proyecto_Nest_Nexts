@@ -76,9 +76,10 @@ promotion_redemptions   (userId + promotionId + orderId)
 
 | Tema | HU |
 |---|---|
-| Activación automática Cine Flash | HU-019 |
 | Giftcards | HU-018 |
 | Puntos / incompatibilidad con promos | HU-023 |
+
+> Cine Flash automático (activación por ocupación) → **HU-019** (hecho).
 
 ## Cómo probar
 

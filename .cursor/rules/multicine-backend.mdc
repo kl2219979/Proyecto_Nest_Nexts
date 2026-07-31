@@ -63,6 +63,7 @@ alwaysApply: true
 - HU-017 transferencia de entradas (POST/GET /tickets/transfer, accept, invite, RN-071…075)
 - HU-018 bonos de regalo digitales (POST/GET /giftcards, redeem, webhook, cart apply, RN-076…079)
 - HU-023 fidelización y puntos (GET/POST /points, levels, cart apply, RN-099…101)
+- HU-019 Cine Flash (POST /cineflash/process, GET /movies/cineflash, cron, RN-080…086)
 
 ## Siguiente
-- HU-019 Cine Flash (Promoción Inteligente Automática)
+- HU-021 Chatbot Inteligente para Recomendación de Películas

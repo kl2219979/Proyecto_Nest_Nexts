@@ -26,6 +26,8 @@ export type PromotionResponse = {
   movieId: string | null;
   genreId: string | null;
   format: MovieFormat | null;
+  /** Scope por función (HU-019 Cine Flash). */
+  showtimeId: string | null;
   appliesToTickets: boolean;
   appliesToSnacks: boolean;
   minMembershipLevel: MembershipLevel | null;
@@ -65,6 +67,8 @@ export type PromoEvaluationContext = {
   movieId?: string | null;
   genreIds?: string[];
   format?: MovieFormat | null;
+  /** Función del carrito / precios (scope HU-019). */
+  showtimeId?: string | null;
   membershipLevel?: MembershipLevel | null;
   birthDate?: string | null;
 };

@@ -17,8 +17,7 @@ import { PromotionsService } from './promotions.service';
  * - Catálogo público + CRUD ADMIN en `/api/v1/promotions`
  * - CRUD auditado en `/api/admin/promotions` (controller en `AdminModule`)
  * - Motor para carrito (`apply-promo`) y precios de función (RN-038)
- *
- * Cine Flash automático = HU-019 (solo tipología `CINE_FLASH` aquí).
+ * - Tipología `CINE_FLASH` + scope `showtimeId` (activación automática = HU-019)
  */
 @Module({
   imports: [

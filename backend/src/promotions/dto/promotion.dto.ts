@@ -137,6 +137,14 @@ export class CreatePromotionDto {
   @IsEnum(MovieFormat)
   format?: MovieFormat | null;
 
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Scope por función (HU-019 Cine Flash)',
+  })
+  @IsOptional()
+  @IsUUID('4')
+  showtimeId?: string | null;
+
   @ApiPropertyOptional({ default: true })
   @IsOptional()
   @IsBoolean()
@@ -282,6 +290,14 @@ export class UpdatePromotionDto {
   @IsOptional()
   @IsEnum(MovieFormat)
   format?: MovieFormat | null;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Scope por función (HU-019 Cine Flash)',
+  })
+  @IsOptional()
+  @IsUUID('4')
+  showtimeId?: string | null;
 
   @ApiPropertyOptional()
   @IsOptional()

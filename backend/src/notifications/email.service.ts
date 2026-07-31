@@ -651,6 +651,49 @@ export class EmailService {
   }
 
   /**
+   * Aviso de Cine Flash (marketing, HU-019 / RN-086).
+   *
+   * Respeta `emailMarketing`. Idempotente por usuario + promotionId.
+   */
+  async sendCineFlash(params: {
+    userId: string;
+    email: string;
+    promotionId: string;
+    movieTitle: string;
+    startsAt: string;
+    cinemaName: string;
+    roomName: string;
+    discountPercent: number;
+    flashPrice: number;
+    basePrice: number;
+    maxTickets: number;
+    functionId: string;
+    movieId: string;
+    cityId: string;
+  }): Promise<EmailNotification> {
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.email,
+      template: EmailTemplate.CINE_FLASH,
+      payload: {
+        movieTitle: params.movieTitle,
+        startsAt: params.startsAt,
+        cinemaName: params.cinemaName,
+        roomName: params.roomName,
+        discountPercent: params.discountPercent,
+        flashPrice: String(params.flashPrice),
+        basePrice: String(params.basePrice),
+        maxTickets: params.maxTickets,
+        movieUrl: `${this.publicUrl()}/api/v1/movies/${params.movieId}?cityId=${params.cityId}`,
+        cineflashUrl: `${this.publicUrl()}/api/v1/movies/cineflash?cityId=${params.cityId}`,
+      },
+      relatedEntityType: 'CINE_FLASH',
+      relatedEntityId: `${params.promotionId}:${params.userId}`,
+      idempotent: true,
+    });
+  }
+
+  /**
    * ¿Ya se envió (o encoló) un recordatorio de este tipo para la orden?
    */
   async hasReminder(

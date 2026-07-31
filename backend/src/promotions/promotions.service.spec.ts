@@ -68,6 +68,7 @@ describe('PromotionsService', () => {
       movieId: null,
       genreId: null,
       format: null,
+      showtimeId: null,
       appliesToTickets: true,
       appliesToSnacks: false,
       minMembershipLevel: null,
