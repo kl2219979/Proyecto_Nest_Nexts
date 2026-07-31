@@ -56,6 +56,7 @@ alwaysApply: true
 - HU-013 proceso de pago seguro (POST/GET /payments, webhook HMAC, órdenes, RN-053…056)
 - HU-014 entradas digitales + factura (GET /tickets, GET /invoice/:id, PDF/QR, RN-057…060)
 - HU-015 notificaciones automáticas por correo (historial, prefs, RN-061…064)
+- HU-024 escaneo y validación de código QR (POST /tickets/validate, RN-102…104)
 
 ## Siguiente
-- HU-024 escaneo y validación de código QR
+- HU-020 Panel Administrativo del Multicine

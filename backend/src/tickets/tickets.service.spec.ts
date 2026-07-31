@@ -1,7 +1,11 @@
 /**
- * Tests unitarios de `TicketsService` (HU-014).
+ * Tests unitarios de `TicketsService` (HU-014 / HU-024).
  */
-import { ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -17,6 +21,14 @@ import { TicketsService } from './tickets.service';
 describe('TicketsService', () => {
   let service: TicketsService;
 
+  const updateQb = {
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    execute: jest.fn().mockResolvedValue({ affected: 1 }),
+  };
+
   const ticketRepo = {
     create: jest.fn((x: unknown) => x),
     save: jest.fn(async (rows: Ticket[] | Ticket) => {
@@ -30,7 +42,7 @@ describe('TicketsService', () => {
     }),
     find: jest.fn(),
     findOne: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    createQueryBuilder: jest.fn(() => updateQb),
   };
 
   const invoiceRepo = {
@@ -70,10 +82,33 @@ describe('TicketsService', () => {
     buildInvoicePdf: jest.fn().mockResolvedValue(Buffer.from('%PDF-invoice')),
   };
 
+  const validTicketBase = {
+    id: 'tkt-1',
+    orderId: 'order-1',
+    userId: 'user-1',
+    code: 'TKT-ABC12345',
+    qrPayload: 'MCQR-a1b2c3d4e5f6789012345678abcdef01',
+    status: TicketStatus.VALID,
+    ticketType: 'STANDARD',
+    movieTitle: 'Demo',
+    startsAt: new Date('2026-08-01T20:00:00Z'),
+    cinemaName: 'Laureles',
+    roomName: 'Sala 1',
+    seatLabel: 'A1',
+    format: '2D',
+    language: 'ESP',
+    buyerName: 'Ana Pérez',
+    usedAt: null,
+    validatedByUserId: null,
+    createdAt: new Date('2026-07-30T18:00:00Z'),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     ticketRepo.findOne.mockResolvedValue(null);
     invoiceRepo.findOne.mockResolvedValue(null);
+    updateQb.execute.mockResolvedValue({ affected: 1 });
+    ticketRepo.createQueryBuilder.mockReturnValue(updateQb);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -142,6 +177,7 @@ describe('TicketsService', () => {
     expect(result.tickets[0].qr.singleUse).toBe(true);
     expect(result.tickets[0].buyerName).toBe('Ana Pérez');
     expect(result.tickets[0].status).toBe(TicketStatus.VALID);
+    expect(result.tickets[0].validatedByUserId).toBeNull();
     expect(result.invoice.number).toMatch(/^FE-\d{8}-[A-F0-9]{6}$/);
     expect(result.invoice.total).toBe(38080);
     expect(result.invoice.lines).toHaveLength(2);
@@ -168,23 +204,10 @@ describe('TicketsService', () => {
 
   it('getMine rechaza entradas de otro usuario', async () => {
     ticketRepo.findOne.mockResolvedValue({
-      id: 'tkt-1',
+      ...validTicketBase,
       userId: 'other',
-      orderId: 'order-1',
-      code: 'TKT-1',
       qrPayload: 'MCQR-x',
-      status: TicketStatus.VALID,
-      ticketType: 'STANDARD',
-      movieTitle: 'Demo',
-      startsAt: new Date(),
-      cinemaName: 'Laureles',
-      roomName: 'Sala 1',
-      seatLabel: 'A1',
-      format: '2D',
-      language: 'ESP',
-      buyerName: 'Otro',
-      usedAt: null,
-      createdAt: new Date(),
+      code: 'TKT-1',
     });
 
     await expect(service.getMine('user-1', 'tkt-1')).rejects.toBeInstanceOf(
@@ -194,23 +217,9 @@ describe('TicketsService', () => {
 
   it('getTicketPdf regenera el PDF (RN-059)', async () => {
     ticketRepo.findOne.mockResolvedValue({
-      id: 'tkt-1',
-      userId: 'user-1',
-      orderId: 'order-1',
+      ...validTicketBase,
       code: 'TKT-ABC',
       qrPayload: 'MCQR-abc',
-      status: TicketStatus.VALID,
-      ticketType: 'STANDARD',
-      movieTitle: 'Demo',
-      startsAt: new Date(),
-      cinemaName: 'Laureles',
-      roomName: 'Sala 1',
-      seatLabel: 'A1',
-      format: '2D',
-      language: 'ESP',
-      buyerName: 'Ana Pérez',
-      usedAt: null,
-      createdAt: new Date(),
     });
 
     const pdf = await service.getTicketPdf('user-1', 'tkt-1');
@@ -218,5 +227,115 @@ describe('TicketsService', () => {
     expect(pdf.filename).toBe('TKT-ABC.pdf');
     expect(pdf.buffer.toString()).toContain('%PDF');
     expect(pdfService.buildTicketPdf).toHaveBeenCalled();
+  });
+
+  describe('validateQr (HU-024)', () => {
+    it('autoriza ingreso y marca USED (RN-102/103/104)', async () => {
+      ticketRepo.findOne.mockResolvedValue({ ...validTicketBase });
+      orderRepo.findOne.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PAID,
+      });
+
+      const result = await service.validateQr(
+        'staff-1',
+        'MCQR-a1b2c3d4e5f6789012345678abcdef01',
+      );
+
+      expect(result.allowed).toBe(true);
+      expect(result.message).toBe('Ingreso autorizado');
+      expect(result.ticket.status).toBe(TicketStatus.USED);
+      expect(result.ticket.validatedByUserId).toBe('staff-1');
+      expect(result.ticket.roomName).toBe('Sala 1');
+      expect(result.ticket.seatLabel).toBe('A1');
+      expect(result.ticket.usedAt).toBeTruthy();
+      expect(updateQb.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: TicketStatus.USED,
+          validatedByUserId: 'staff-1',
+        }),
+      );
+    });
+
+    it('rechaza QR desconocido', async () => {
+      ticketRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.validateQr('staff-1', 'MCQR-unknown'),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('alerta si el QR ya fue utilizado (RN-102)', async () => {
+      ticketRepo.findOne.mockResolvedValue({
+        ...validTicketBase,
+        status: TicketStatus.USED,
+        usedAt: new Date('2026-08-01T19:55:00Z'),
+        validatedByUserId: 'staff-prev',
+      });
+
+      await expect(
+        service.validateQr('staff-1', validTicketBase.qrPayload),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          code: 'TICKET_ALREADY_USED',
+        }),
+      });
+      expect(updateQb.execute).not.toHaveBeenCalled();
+    });
+
+    it('rechaza entrada anulada', async () => {
+      ticketRepo.findOne.mockResolvedValue({
+        ...validTicketBase,
+        status: TicketStatus.CANCELLED,
+      });
+
+      await expect(
+        service.validateQr('staff-1', validTicketBase.qrPayload),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          code: 'TICKET_CANCELLED',
+        }),
+      });
+    });
+
+    it('rechaza si la orden no está PAID', async () => {
+      ticketRepo.findOne.mockResolvedValue({ ...validTicketBase });
+      orderRepo.findOne.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PENDING,
+      });
+
+      await expect(
+        service.validateQr('staff-1', validTicketBase.qrPayload),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          code: 'ORDER_NOT_PAID',
+        }),
+      });
+    });
+
+    it('trata carrera concurrente como ya utilizado', async () => {
+      ticketRepo.findOne
+        .mockResolvedValueOnce({ ...validTicketBase })
+        .mockResolvedValueOnce({
+          ...validTicketBase,
+          status: TicketStatus.USED,
+          usedAt: new Date('2026-08-01T19:56:00Z'),
+          validatedByUserId: 'staff-other',
+        });
+      orderRepo.findOne.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PAID,
+      });
+      updateQb.execute.mockResolvedValue({ affected: 0 });
+
+      await expect(
+        service.validateQr('staff-1', validTicketBase.qrPayload),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          code: 'TICKET_ALREADY_USED',
+        }),
+      });
+    });
   });
 });

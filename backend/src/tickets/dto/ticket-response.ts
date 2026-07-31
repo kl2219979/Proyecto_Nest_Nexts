@@ -40,6 +40,8 @@ export type TicketView = {
   };
   pdfUrl: string;
   usedAt: string | null;
+  /** Colaborador que validó en puerta (HU-024); null si aún no ingresó. */
+  validatedByUserId: string | null;
   createdAt: string;
 };
 
@@ -47,6 +49,33 @@ export type TicketView = {
 export type TicketListResponse = {
   items: TicketView[];
   total: number;
+};
+
+/**
+ * Respuesta de `POST /tickets/validate` (HU-024).
+ *
+ * Incluye datos de función/sala para que el operador confirme el acceso
+ * visualmente en el dispositivo de escaneo.
+ */
+export type TicketValidationResult = {
+  /** `true` solo si el ingreso quedó registrado (VALID → USED). */
+  allowed: true;
+  message: string;
+  ticket: {
+    id: string;
+    code: string;
+    status: string;
+    movieTitle: string;
+    startsAt: string;
+    cinemaName: string;
+    roomName: string;
+    seatLabel: string;
+    format: string;
+    language: string;
+    buyerName: string;
+    usedAt: string;
+    validatedByUserId: string;
+  };
 };
 
 /**

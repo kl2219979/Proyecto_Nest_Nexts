@@ -14,12 +14,13 @@ import { OrderTicketItem } from '../../payments/entities/order-ticket-item.entit
 import { TicketStatus, TicketType } from '../enums/ticket.enums';
 
 /**
- * Entrada digital con QR único (HU-014).
+ * Entrada digital con QR único (HU-014 / HU-024).
  *
  * Se genera al aprobar el pago (webhook APPROVED). El PDF se arma
- * bajo demanda (RN-059); el escaneo de puerta es HU-024.
+ * bajo demanda (RN-059). El escaneo en puerta marca `USED` (HU-024).
  *
- * RN-057: `qrPayload` único · RN-058/060: un solo uso vía `status=USED`.
+ * RN-057: `qrPayload` único · RN-058/060/102: un solo uso vía `status=USED`.
+ * RN-103/104: `usedAt` + `validatedByUserId` al ingresar.
  *
  * @remarks
  * **Patrón:** Aggregate hijo de Order (no Aggregate Root propio).
@@ -106,9 +107,21 @@ export class Ticket {
   @Column({ type: 'varchar', length: 220 })
   buyerName!: string;
 
-  /** Momento en que se invalidó por ingreso (HU-024). */
+  /** Momento de ingreso a sala (HU-024 / RN-103). */
   @Column({ type: 'timestamptz', nullable: true })
   usedAt!: Date | null;
+
+  /**
+   * Colaborador que escaneó el QR en puerta (HU-024 / RN-104).
+   * Es el `userId` del JWT que invocó `POST /tickets/validate`.
+   * RBAC de roles STAFF llega en HU-020; hoy basta autenticación JWT.
+   */
+  @Column({ type: 'uuid', nullable: true })
+  validatedByUserId!: string | null;
+
+  @ManyToOne(() => User, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'validatedByUserId' })
+  validatedBy!: User | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;

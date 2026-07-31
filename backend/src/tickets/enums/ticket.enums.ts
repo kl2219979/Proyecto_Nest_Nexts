@@ -1,13 +1,12 @@
 /**
- * Estados de una entrada digital (HU-014 / RN-057…060).
+ * Estados de una entrada digital (HU-014 / HU-024 · RN-057…060 · RN-102).
  *
- * `USED` lo marcará el escaneo en puerta (HU-024); aquí solo se modela
- * para que el QR sea de un solo uso (RN-058 / RN-060).
+ * `USED` lo marca el escaneo en puerta (`POST /tickets/validate`).
  */
 export enum TicketStatus {
   /** Lista para ingreso; QR válido. */
   VALID = 'VALID',
-  /** Ya escaneada en puerta (RN-058 / RN-060). */
+  /** Ya escaneada en puerta (RN-058 / RN-060 / RN-102). */
   USED = 'USED',
   /** Anulada (reprogramación HU-016 / transferencia HU-017). */
   CANCELLED = 'CANCELLED',

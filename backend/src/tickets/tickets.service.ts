@@ -17,6 +17,7 @@ import {
   InvoiceLineSnapshot,
   InvoiceView,
   TicketListResponse,
+  TicketValidationResult,
   TicketView,
 } from './dto/ticket-response';
 import { Invoice } from './entities/invoice.entity';
@@ -24,10 +25,10 @@ import { Ticket } from './entities/ticket.entity';
 import { TicketStatus, TicketType } from './enums/ticket.enums';
 
 /**
- * Generación y consulta de entradas digitales + factura (HU-014).
+ * Entradas digitales, factura y validación en puerta (HU-014 / HU-024).
  *
- * Se invoca desde el webhook APPROVED de pagos. Expone listados y
- * descarga PDF regenerable (RN-057…060).
+ * Generación tras webhook APPROVED; consulta/PDF (RN-057…060);
+ * escaneo QR en puerta (RN-102…104).
  *
  * Separado de `PaymentsService` (SRP): cobro vs documentos de ingreso.
  */
@@ -116,6 +117,7 @@ export class TicketsService {
           language: line.language,
           buyerName,
           usedAt: null,
+          validatedByUserId: null,
         }),
       );
     }
@@ -303,6 +305,121 @@ export class TicketsService {
   }
 
   /**
+   * Escaneo en puerta: valida el QR y marca la entrada UTILIZADA (HU-024).
+   *
+   * Comprueba existencia, compra PAID, estado VALID y datos de función.
+   * El update atómico `WHERE status = VALID` evita doble ingreso concurrente
+   * (RN-102). Registra `usedAt` (RN-103) y colaborador (RN-104).
+   *
+   * @param staffUserId - JWT del colaborador que escanea.
+   * @param qrPayload - Payload leído del QR (`MCQR-…`).
+   * @returns Confirmación con película/sala/silla para el dispositivo.
+   * @throws {NotFoundException} QR inexistente.
+   * @throws {ConflictException} Ya usado, anulado o compra no pagada.
+   */
+  async validateQr(
+    staffUserId: string,
+    qrPayload: string,
+  ): Promise<TicketValidationResult> {
+    const payload = qrPayload.trim();
+    const ticket = await this.ticketRepo.findOne({
+      where: { qrPayload: payload },
+    });
+    if (!ticket) {
+      throw new NotFoundException('Código QR no encontrado');
+    }
+
+    if (ticket.status === TicketStatus.USED) {
+      throw new ConflictException({
+        message: 'QR ya utilizado. Ingreso denegado.',
+        code: 'TICKET_ALREADY_USED',
+        usedAt: ticket.usedAt?.toISOString() ?? null,
+        validatedByUserId: ticket.validatedByUserId,
+        ticket: {
+          id: ticket.id,
+          code: ticket.code,
+          movieTitle: ticket.movieTitle,
+          roomName: ticket.roomName,
+          seatLabel: ticket.seatLabel,
+          startsAt: ticket.startsAt.toISOString(),
+        },
+      });
+    }
+
+    if (ticket.status === TicketStatus.CANCELLED) {
+      throw new ConflictException({
+        message: 'Entrada anulada. Ingreso denegado.',
+        code: 'TICKET_CANCELLED',
+        ticket: { id: ticket.id, code: ticket.code },
+      });
+    }
+
+    const order = await this.orderRepo.findOne({
+      where: { id: ticket.orderId },
+    });
+    if (!order || order.status !== OrderStatus.PAID) {
+      throw new ConflictException({
+        message: 'La compra asociada no está pagada. Ingreso denegado.',
+        code: 'ORDER_NOT_PAID',
+        ticket: { id: ticket.id, code: ticket.code },
+      });
+    }
+
+    const usedAt = new Date();
+    const updateResult = await this.ticketRepo
+      .createQueryBuilder()
+      .update(Ticket)
+      .set({
+        status: TicketStatus.USED,
+        usedAt,
+        validatedByUserId: staffUserId,
+      })
+      .where('id = :id', { id: ticket.id })
+      .andWhere('status = :status', { status: TicketStatus.VALID })
+      .execute();
+
+    if (!updateResult.affected || updateResult.affected < 1) {
+      const again = await this.ticketRepo.findOne({
+        where: { id: ticket.id },
+      });
+      throw new ConflictException({
+        message: 'QR ya utilizado. Ingreso denegado.',
+        code: 'TICKET_ALREADY_USED',
+        usedAt: again?.usedAt?.toISOString() ?? null,
+        validatedByUserId: again?.validatedByUserId ?? null,
+        ticket: {
+          id: ticket.id,
+          code: ticket.code,
+          movieTitle: ticket.movieTitle,
+          roomName: ticket.roomName,
+          seatLabel: ticket.seatLabel,
+          startsAt: ticket.startsAt.toISOString(),
+        },
+      });
+    }
+
+    return {
+      allowed: true,
+      message: 'Ingreso autorizado',
+      ticket: {
+        id: ticket.id,
+        code: ticket.code,
+        status: TicketStatus.USED,
+        movieTitle: ticket.movieTitle,
+        startsAt: ticket.startsAt.toISOString(),
+        cinemaName: ticket.cinemaName,
+        roomName: ticket.roomName,
+        seatLabel: ticket.seatLabel,
+        format: ticket.format,
+        language: ticket.language,
+        buyerName: ticket.buyerName,
+        usedAt: usedAt.toISOString(),
+        validatedByUserId: staffUserId,
+      },
+    };
+  }
+
+  /**
    * Historial de compras para consumidores internos (p. ej. tests).
    * La vista pública vive en `GET /membership.purchaseHistory`.
    *
@@ -453,6 +570,7 @@ export class TicketsService {
       },
       pdfUrl: `${base}/api/v1/tickets/${ticket.id}/pdf`,
       usedAt: ticket.usedAt?.toISOString() ?? null,
+      validatedByUserId: ticket.validatedByUserId ?? null,
       createdAt: ticket.createdAt.toISOString(),
     };
   }

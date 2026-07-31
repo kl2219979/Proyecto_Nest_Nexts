@@ -39,7 +39,8 @@
 | HU-013 Proceso de pago | **Hecho** | POST/GET /payments · webhook HMAC · órdenes · RN-053…056 |
 | HU-014 Entradas + factura | **Hecho** | GET /tickets · GET /invoice/:id · PDF/QR · RN-057…060 |
 | HU-015 Notificaciones email | **Hecho** | Motor correo + historial + prefs · RN-061…064 · cron recordatorios |
-| HU-016 … HU-029 | Pendiente | Ver sección 3 (siguiente: HU-024) |
+| HU-024 Escaneo QR puerta | **Hecho** | POST /tickets/validate · VALID→USED · RN-102…104 |
+| HU-016 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-020) |
 
 ### Bitácora de avances
 
@@ -163,6 +164,13 @@
 - `EMAIL_FORCE_FAIL` para simular fallos; envío real = log stub (sustituible por proveedor).
 - Guía `docs/features/hu-015-email-notifications.md`.
 - Push / SMTP productivo / transferencias = fuera de alcance (HUs posteriores).
+
+#### HU-024 — Escaneo y validación de código QR
+- Extensión de `tickets/`: `Ticket.validatedByUserId` + `POST /tickets/validate` (JWT colaborador).
+- Valida existencia, orden PAID, estado VALID; marca `USED` con update atómico anti carrera.
+- RN-102 un solo uso; RN-103 `usedAt`; RN-104 colaborador del JWT; alerta 409 si reuso.
+- Respuesta con película/sala/silla/hora para confirmación en dispositivo de puerta.
+- Roles STAFF formales → HU-020; guía `docs/features/hu-024-ticket-validate.md`.
 
 ---
 
@@ -345,6 +353,7 @@ Health OK
 - HU-013 guía: `docs/features/hu-013-payments.md`
 - HU-014 guía: `docs/features/hu-014-tickets-invoice.md`
 - HU-015 guía: `docs/features/hu-015-email-notifications.md`
+- HU-024 guía: `docs/features/hu-024-ticket-validate.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -358,5 +367,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-024 Escaneo y Validación de Código QR.
+Siguiente: HU-020 Panel Administrativo del Multicine.
 ```

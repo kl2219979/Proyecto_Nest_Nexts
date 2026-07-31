@@ -1,15 +1,20 @@
 import {
+  Body,
   Controller,
   Get,
   Header,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
+  Post,
   Res,
   StreamableFile,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -22,14 +27,20 @@ import type { Response } from 'express';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 import type { AuthUser } from '../auth/jwt/jwt.strategy';
-import { TicketListResponse, TicketView } from './dto/ticket-response';
+import {
+  TicketListResponse,
+  TicketValidationResult,
+  TicketView,
+} from './dto/ticket-response';
+import { ValidateTicketDto } from './dto/validate-ticket.dto';
 import { TicketsService } from './tickets.service';
 
 /**
- * Entradas digitales (HU-014).
+ * Entradas digitales y validación en puerta (HU-014 / HU-024).
  *
  * Prefijo global `/api/v1`:
  * - `GET /tickets` — Mis compras / entradas
+ * - `POST /tickets/validate` — Escaneo QR (colaborador)
  * - `GET /tickets/:id` — detalle
  * - `GET /tickets/:id/pdf` — descarga PDF (RN-059)
  */
@@ -39,7 +50,7 @@ import { TicketsService } from './tickets.service';
 @ApiBearerAuth()
 export class TicketsController {
   /**
-   * @param ticketsService - Consulta y PDF de entradas.
+   * @param ticketsService - Consulta, PDF y validación en puerta.
    */
   constructor(private readonly ticketsService: TicketsService) {}
 
@@ -59,6 +70,38 @@ export class TicketsController {
   @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
   listMine(@CurrentUser() user: AuthUser): Promise<TicketListResponse> {
     return this.ticketsService.listMine(user.userId);
+  }
+
+  /**
+   * Escaneo de QR en puerta (HU-024 / RN-102…104).
+   *
+   * Declarado antes de `:id` para no colisionar con rutas dinámicas.
+   * El colaborador autenticado (JWT) queda registrado en `validatedByUserId`.
+   * Roles STAFF formales llegan con el panel admin (HU-020).
+   *
+   * @param user - JWT del colaborador.
+   * @param dto - Payload leído del QR.
+   * @returns Ingreso autorizado + datos de función/sala.
+   */
+  @Post('validate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Validar QR de entrada en puerta',
+    description:
+      'Comprueba existencia, compra pagada y estado VALID; marca UTILIZADA (RN-102). ' +
+      'Registra fecha/hora (RN-103) y colaborador (RN-104). Rechaza reuso con alerta.',
+  })
+  @ApiOkResponse({ description: 'Ingreso autorizado; entrada marcada USED' })
+  @ApiNotFoundResponse({ description: 'QR desconocido' })
+  @ApiConflictResponse({
+    description: 'QR ya usado, anulado o compra no pagada',
+  })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  validate(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ValidateTicketDto,
+  ): Promise<TicketValidationResult> {
+    return this.ticketsService.validateQr(user.userId, dto.qrPayload);
   }
 
   /**
