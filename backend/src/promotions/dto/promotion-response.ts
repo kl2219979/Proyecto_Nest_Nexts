@@ -30,6 +30,7 @@ export type PromotionResponse = {
   appliesToSnacks: boolean;
   minMembershipLevel: MembershipLevel | null;
   birthdayWindowDays: number;
+  incompatibleWithPoints: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -78,4 +79,6 @@ export type PromoApplicationResult = {
   discountAmount: number;
   stackable: boolean;
   description: string | null;
+  /** RN-100 / HU-023: bloquea acumulación y redención de puntos. */
+  incompatibleWithPoints: boolean;
 };

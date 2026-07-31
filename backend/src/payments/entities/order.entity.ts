@@ -83,6 +83,18 @@ export class Order {
   @Column({ type: 'varchar', length: 40, nullable: true })
   giftcardCode!: string | null;
 
+  /** Puntos redimidos en esta orden (HU-023); se debitan al PAID. */
+  @Column({ type: 'int', default: 0 })
+  pointsRedeemed!: number;
+
+  /** Descuento COP por puntos. */
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  pointsDiscountAmount!: number;
+
+  /** Puntos acumulados tras APPROVED (0 si promo incompatible RN-100). */
+  @Column({ type: 'int', default: 0 })
+  pointsEarned!: number;
+
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   tax!: number;
 

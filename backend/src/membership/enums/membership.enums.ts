@@ -14,7 +14,7 @@ export enum MembershipStatus {
 }
 
 /**
- * Nivel inicial Bronce; subidas de nivel son HU-023.
+ * Nivel inicial Bronce; subidas automáticas por puntos = HU-023 / RN-101.
  */
 export enum MembershipLevel {
   BRONZE = 'BRONZE',

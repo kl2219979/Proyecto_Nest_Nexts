@@ -14,6 +14,7 @@ import { User } from '../auth/entities/user.entity';
 import { CartService, CART_TTL_MS } from '../cart/cart.service';
 import type { CartResponse } from '../cart/dto/cart-response';
 import { GiftcardsService } from '../giftcards/giftcards.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { EmailService } from '../notifications/email.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { SeatsService } from '../seats/seats.service';
@@ -69,6 +70,7 @@ export class PaymentsService {
    * @param emailService - Correo compra / rechazo (HU-015).
    * @param promotionsService - Redenciones de cupón (HU-026 / RN-107).
    * @param giftcardsService - Débito de bono aplicado (HU-018).
+   * @param loyaltyService - Acumulación / redención de puntos (HU-023).
    */
   constructor(
     @InjectRepository(Order)
@@ -91,6 +93,7 @@ export class PaymentsService {
     private readonly emailService: EmailService,
     private readonly promotionsService: PromotionsService,
     private readonly giftcardsService: GiftcardsService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   /**
@@ -408,6 +411,32 @@ export class PaymentsService {
       );
     }
 
+    /** HU-023: debita puntos redimidos en el carrito. */
+    if (order.pointsRedeemed > 0) {
+      await this.loyaltyService.consumeForOrder(
+        payment.userId,
+        order.pointsRedeemed,
+        Number(order.pointsDiscountAmount),
+        order.id,
+      );
+    }
+
+    /** HU-023: acumula puntos por valor de compra (RN-100 / RN-101). */
+    const qualifying = Math.max(
+      0,
+      Number(order.subtotal) -
+        Number(order.membershipDiscount) -
+        Number(order.promoDiscount),
+    );
+    const earned = await this.loyaltyService.earnForOrder({
+      userId: payment.userId,
+      orderId: order.id,
+      qualifyingAmountCop: qualifying,
+      promoCode: order.promoCode,
+    });
+    order.pointsEarned = earned;
+    await this.orderRepo.save(order);
+
     /** HU-014: entradas digitales + factura electrónica. */
     const docs = await this.ticketsService.fulfillPaidOrder(order.id);
     const refreshedOrder = await this.orderRepo.findOneOrFail({
@@ -519,6 +548,9 @@ export class PaymentsService {
       promoDiscount: view.summary.promoDiscount,
       giftcardAmount: view.summary.giftcardAmount,
       giftcardCode: view.giftcard.code,
+      pointsRedeemed: view.points.redeemed,
+      pointsDiscountAmount: view.summary.pointsDiscountAmount,
+      pointsEarned: 0,
       tax: view.summary.tax,
       total: view.summary.total,
       promoCode: view.promo.code,
@@ -642,6 +674,9 @@ export class PaymentsService {
       membershipDiscount: Number(order.membershipDiscount),
       promoDiscount: Number(order.promoDiscount),
       giftcardAmount: Number(order.giftcardAmount),
+      pointsDiscountAmount: Number(order.pointsDiscountAmount),
+      pointsRedeemed: order.pointsRedeemed,
+      pointsEarned: order.pointsEarned,
       tax: Number(order.tax),
       total: Number(order.total),
       promoCode: order.promoCode,

@@ -165,6 +165,7 @@ export class PromotionsService {
       appliesToSnacks: dto.appliesToSnacks ?? false,
       minMembershipLevel: dto.minMembershipLevel ?? null,
       birthdayWindowDays: dto.birthdayWindowDays ?? 0,
+      incompatibleWithPoints: dto.incompatibleWithPoints ?? false,
     });
 
     const saved = await this.promoRepo.save(promo);
@@ -236,6 +237,9 @@ export class PromotionsService {
     }
     if (dto.birthdayWindowDays !== undefined) {
       promo.birthdayWindowDays = dto.birthdayWindowDays;
+    }
+    if (dto.incompatibleWithPoints !== undefined) {
+      promo.incompatibleWithPoints = dto.incompatibleWithPoints;
     }
 
     const saved = await this.promoRepo.save(promo);
@@ -331,6 +335,7 @@ export class PromotionsService {
       discountAmount,
       stackable: promo.stackable,
       description: promo.description,
+      incompatibleWithPoints: promo.incompatibleWithPoints,
     };
   }
 
@@ -803,6 +808,7 @@ export class PromotionsService {
       appliesToSnacks: promo.appliesToSnacks,
       minMembershipLevel: promo.minMembershipLevel,
       birthdayWindowDays: promo.birthdayWindowDays,
+      incompatibleWithPoints: promo.incompatibleWithPoints,
       createdAt: promo.createdAt.toISOString(),
       updatedAt: promo.updatedAt.toISOString(),
     };

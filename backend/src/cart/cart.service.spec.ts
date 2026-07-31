@@ -19,6 +19,7 @@ import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { GiftcardsService } from '../giftcards/giftcards.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { CartService, CART_TAX_RATE } from './cart.service';
 import { CartSnackItem } from './entities/cart-snack-item.entity';
 import { CartTicketItem } from './entities/cart-ticket-item.entity';
@@ -70,6 +71,9 @@ describe('CartService', () => {
     applyCodeToCart: jest.fn(),
   };
   const giftcardsService = {
+    previewForCart: jest.fn(),
+  };
+  const loyaltyService = {
     previewForCart: jest.fn(),
   };
 
@@ -153,6 +157,7 @@ describe('CartService', () => {
         { provide: SnacksService, useValue: snacksService },
         { provide: PromotionsService, useValue: promotionsService },
         { provide: GiftcardsService, useValue: giftcardsService },
+        { provide: LoyaltyService, useValue: loyaltyService },
       ],
     }).compile();
 
@@ -196,6 +201,8 @@ describe('CartService', () => {
       promoStackable: null,
       giftcardCode: null,
       giftcardAmount: 0,
+      pointsRedeemed: 0,
+      pointsDiscountAmount: 0,
       tickets: [
         {
           id: 't1',
@@ -236,6 +243,8 @@ describe('CartService', () => {
       promoStackable: false,
       giftcardCode: null,
       giftcardAmount: 0,
+      pointsRedeemed: 0,
+      pointsDiscountAmount: 0,
       tickets: [],
       snacks: [],
       createdAt: new Date(),
@@ -273,6 +282,8 @@ describe('CartService', () => {
       promoStackable: null,
       giftcardCode: null,
       giftcardAmount: 0,
+      pointsRedeemed: 0,
+      pointsDiscountAmount: 0,
       tickets: [
         {
           id: 't1',
@@ -335,6 +346,8 @@ describe('CartService', () => {
       promoStackable: null,
       giftcardCode: null,
       giftcardAmount: 0,
+      pointsRedeemed: 0,
+      pointsDiscountAmount: 0,
       tickets: [],
       snacks: [],
       createdAt: new Date(),
@@ -362,6 +375,8 @@ describe('CartService', () => {
       promoStackable: null,
       giftcardCode: null,
       giftcardAmount: 0,
+      pointsRedeemed: 0,
+      pointsDiscountAmount: 0,
       tickets: [
         {
           id: 't1',
@@ -424,6 +439,8 @@ describe('CartService', () => {
       promoStackable: null,
       giftcardCode: null,
       giftcardAmount: 0,
+      pointsRedeemed: 0,
+      pointsDiscountAmount: 0,
       tickets: [],
       snacks: [],
       createdAt: new Date(),

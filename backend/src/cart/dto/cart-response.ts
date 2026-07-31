@@ -41,7 +41,9 @@ export type CartSummary = {
   membershipDiscount: number;
   promoDiscount: number;
   giftcardAmount: number;
-  /** IVA calculado sobre (subtotal − descuentos) antes de giftcard. */
+  /** Descuento COP por puntos de fidelización (HU-023). */
+  pointsDiscountAmount: number;
+  /** IVA calculado sobre (subtotal − descuentos) antes de giftcard/puntos. */
   tax: number;
   taxRate: number;
   total: number;
@@ -76,6 +78,11 @@ export type CartResponse = {
   giftcard: {
     code: string | null;
     amount: number;
+  };
+  /** Puntos aplicados al carrito (HU-023). */
+  points: {
+    redeemed: number;
+    discountAmount: number;
   };
   tickets: CartTicketView[];
   snacks: CartSnackView[];

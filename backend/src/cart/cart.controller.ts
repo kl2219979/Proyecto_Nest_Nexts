@@ -30,6 +30,7 @@ import {
   UpdateCartSnackDto,
 } from './dto/cart-snacks.dto';
 import { ApplyPromoDto, CreateCartDto, UpdateCartDto, ApplyGiftcardDto } from './dto/cart.dto';
+import { ApplyPointsDto } from '../loyalty/dto/loyalty.dto';
 
 /**
  * Carrito de compras (HU-011 + confitería HU-012).
@@ -278,5 +279,31 @@ export class CartController {
     @Body() dto: ApplyGiftcardDto,
   ): Promise<CartResponse> {
     return this.cartService.applyGiftcard(user.userId, dto);
+  }
+
+  /**
+   * Aplica puntos de fidelización como descuento (HU-023).
+   *
+   * @param user - Usuario del Access JWT.
+   * @param dto - Cantidad de puntos.
+   * @returns {Promise<CartResponse>} Totales con puntos.
+   */
+  @Post('apply-points')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Aplicar puntos de fidelización al carrito',
+    description:
+      'HU-023 · 1 punto = 10 COP · RN-100 bloquea si hay promo incompatible. ' +
+      'Los puntos se debitan al confirmar el pago.',
+  })
+  @ApiOkResponse({ description: 'Puntos aplicados' })
+  @ApiConflictResponse({ description: 'Saldo insuficiente o promo incompatible' })
+  @ApiNotFoundResponse({ description: 'Carrito inexistente' })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  applyPoints(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ApplyPointsDto,
+  ): Promise<CartResponse> {
+    return this.cartService.applyPoints(user.userId, dto);
   }
 }

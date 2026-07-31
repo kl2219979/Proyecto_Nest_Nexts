@@ -13,6 +13,7 @@ import { CartService } from '../cart/cart.service';
 import { EmailService } from '../notifications/email.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { GiftcardsService } from '../giftcards/giftcards.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { TicketsService } from '../tickets/tickets.service';
@@ -83,6 +84,7 @@ describe('PaymentsService', () => {
     },
     promo: { code: null, discountAmount: 0, stackable: null },
     giftcard: { code: null, amount: 0 },
+    points: { redeemed: 0, discountAmount: 0 },
     tickets: [
       {
         id: 'ct-1',
@@ -120,6 +122,7 @@ describe('PaymentsService', () => {
       membershipDiscount: 0,
       promoDiscount: 0,
       giftcardAmount: 0,
+      pointsDiscountAmount: 0,
       tax: 6080,
       taxRate: 0.19,
       total: 38080,
@@ -192,6 +195,11 @@ describe('PaymentsService', () => {
     consumeForOrder: jest.fn().mockResolvedValue(undefined),
   };
 
+  const loyaltyService = {
+    consumeForOrder: jest.fn().mockResolvedValue(undefined),
+    earnForOrder: jest.fn().mockResolvedValue(32),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     paymentRepo.findOne.mockResolvedValue(null);
@@ -229,6 +237,7 @@ describe('PaymentsService', () => {
         { provide: EmailService, useValue: emailService },
         { provide: PromotionsService, useValue: promotionsService },
         { provide: GiftcardsService, useValue: giftcardsService },
+        { provide: LoyaltyService, useValue: loyaltyService },
       ],
     }).compile();
 
@@ -298,6 +307,10 @@ describe('PaymentsService', () => {
         membershipDiscount: 0,
         promoDiscount: 0,
         giftcardAmount: 0,
+        giftcardCode: null,
+        pointsRedeemed: 0,
+        pointsDiscountAmount: 0,
+        pointsEarned: 0,
         tax: 6080,
         total: 38080,
         promoCode: null,
@@ -346,6 +359,10 @@ describe('PaymentsService', () => {
         membershipDiscount: 0,
         promoDiscount: 0,
         giftcardAmount: 0,
+        giftcardCode: null,
+        pointsRedeemed: 0,
+        pointsDiscountAmount: 0,
+        pointsEarned: 0,
         tax: 6080,
         total: 38080,
         promoCode: null,
@@ -439,6 +456,10 @@ describe('PaymentsService', () => {
         membershipDiscount: 0,
         promoDiscount: 0,
         giftcardAmount: 0,
+        giftcardCode: null,
+        pointsRedeemed: 0,
+        pointsDiscountAmount: 0,
+        pointsEarned: 0,
         tax: 0,
         total: 1000,
         promoCode: null,

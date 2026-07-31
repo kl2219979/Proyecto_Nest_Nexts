@@ -4,6 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { User } from '../auth/entities/user.entity';
 import { CartModule } from '../cart/cart.module';
 import { GiftcardsModule } from '../giftcards/giftcards.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PromotionsModule } from '../promotions/promotions.module';
 import { SeatsModule } from '../seats/seats.module';
@@ -25,7 +26,8 @@ import { PaymentsService } from './payments.service';
  * - `POST /payments/webhook` (firma HMAC)
  *
  * Tras APPROVED: tickets/factura (HU-014) + email (HU-015 / RN-064)
- * + redención de cupones (HU-026 / RN-107) + débito giftcard (HU-018).
+ * + redención de cupones (HU-026 / RN-107) + débito giftcard (HU-018)
+ * + puntos fidelización (HU-023).
  */
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { PaymentsService } from './payments.service';
     NotificationsModule,
     PromotionsModule,
     GiftcardsModule,
+    LoyaltyModule,
     TypeOrmModule.forFeature([
       Order,
       OrderTicketItem,

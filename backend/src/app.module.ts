@@ -23,6 +23,7 @@ import { SnacksModule } from './snacks/snacks.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TransferModule } from './transfer/transfer.module';
 import { GiftcardsModule } from './giftcards/giftcards.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -134,6 +135,8 @@ import { GiftcardsModule } from './giftcards/giftcards.module';
     TransferModule,
     /** Bonos de regalo digitales (HU-018). */
     GiftcardsModule,
+    /** Fidelización y puntos (HU-023). */
+    LoyaltyModule,
     /** Promociones y cupones (HU-026). */
     PromotionsModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */

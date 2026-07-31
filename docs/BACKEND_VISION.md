@@ -45,7 +45,8 @@
 | HU-016 Cambio de función | **Hecho** | GET /orders · available-functions · PUT reschedule · regenerate · RN-065…070 |
 | HU-017 Transferencia entradas | **Hecho** | POST/GET /tickets/transfer · accept · invite · RN-071…075 |
 | HU-018 Bonos de regalo | **Hecho** | POST/GET /giftcards · redeem · webhook · cart apply · RN-076…079 |
-| HU-023 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-023) |
+| HU-023 Fidelización / puntos | **Hecho** | GET/POST /points · levels · cart apply · earn/redeem · RN-099…101 |
+| HU-019 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-019) |
 
 ### Bitácora de avances
 
@@ -224,6 +225,15 @@
 - Redención a billetera (`Wallet`) o descuento en carrito (débito al PAID de la orden).
 - Guía `docs/features/hu-018-giftcards.md`.
 - Fidelización / puntos → HU-023.
+
+#### HU-023 — Programa de Fidelización y Acumulación de Puntos
+- Módulo `backend/src/loyalty/`: entidad `PointLedgerEntry` + `LoyaltyService` (FIFO).
+- Endpoints: `GET/POST /points`, `GET /membership/levels`, `POST /cart/apply-points`.
+- Acumulación al webhook APPROVED (valor neto × multiplicador de nivel); redención carrito/billetera.
+- RN-099 vencimiento 12 meses · RN-100 `Promotion.incompatibleWithPoints` · RN-101 nivel automático.
+- `GET /membership.pointsHistory` deja de ser stub; seed `BLACK30` demo incompatible.
+- Guía `docs/features/hu-023-loyalty.md`.
+- Cine Flash → HU-019.
 
 ---
 
@@ -412,6 +422,7 @@ Health OK
 - HU-016 guía: `docs/features/hu-016-reschedule.md`
 - HU-017 guía: `docs/features/hu-017-transfer.md`
 - HU-018 guía: `docs/features/hu-018-giftcards.md`
+- HU-023 guía: `docs/features/hu-023-loyalty.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -425,5 +436,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-023 Programa de Fidelización y Acumulación de Puntos.
+Siguiente: HU-019 Cine Flash (Promoción Inteligente Automática).
 ```

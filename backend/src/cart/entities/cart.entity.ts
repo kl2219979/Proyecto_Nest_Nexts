@@ -102,6 +102,14 @@ export class Cart {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   giftcardAmount!: number;
 
+  /** Puntos de fidelización aplicados (HU-023); se debitan al PAID. */
+  @Column({ type: 'int', default: 0 })
+  pointsRedeemed!: number;
+
+  /** Descuento COP equivalente a los puntos aplicados. */
+  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  pointsDiscountAmount!: number;
+
   @OneToMany(() => CartTicketItem, (item) => item.cart, {
     cascade: true,
     eager: true,

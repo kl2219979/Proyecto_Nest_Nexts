@@ -1,12 +1,16 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomBytes } from 'crypto';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
+import type { PointsHistoryItem } from '../loyalty/dto/loyalty-response';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { Invoice } from '../tickets/entities/invoice.entity';
 import { CreateMembershipDto } from './dto/create-membership.dto';
 import { Membership } from './entities/membership.entity';
@@ -69,8 +73,8 @@ export type MembershipDetailResult = {
   };
   /** Compras con factura emitida (HU-014). */
   purchaseHistory: MembershipPurchaseItem[];
-  /** Movimientos de puntos; vacío hasta HU-023. */
-  pointsHistory: [];
+  /** Movimientos de puntos (HU-023). */
+  pointsHistory: PointsHistoryItem[];
   /** Reservas activas; vacío hasta carrito/tickets (HU-011+). */
   activeReservations: [];
   createdAt: string;
@@ -89,6 +93,7 @@ export class MembershipService {
    * @param walletRepo - Saldo de bonos del socio.
    * @param userRepo - Valida que el usuario exista.
    * @param invoiceRepo - Historial de compras (facturas HU-014).
+   * @param loyaltyService - Historial de puntos (HU-023).
    * @param dataSource - Transacciones al crear membresía + wallet.
    */
   constructor(
@@ -100,6 +105,8 @@ export class MembershipService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Invoice)
     private readonly invoiceRepo: Repository<Invoice>,
+    @Inject(forwardRef(() => LoyaltyService))
+    private readonly loyaltyService: LoyaltyService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -184,6 +191,9 @@ export class MembershipService {
       issuedAt: inv.issuedAt.toISOString(),
     }));
 
+    const pointsHistory =
+      await this.loyaltyService.getHistoryForMembership(userId);
+
     return {
       id: membership.id,
       userId: membership.userId,
@@ -199,7 +209,7 @@ export class MembershipService {
         balance: wallet?.balance ?? '0.00',
       },
       purchaseHistory,
-      pointsHistory: [],
+      pointsHistory,
       activeReservations: [],
       createdAt: membership.createdAt.toISOString(),
     };

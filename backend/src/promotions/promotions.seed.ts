@@ -131,6 +131,7 @@ export async function seedPromotions(dataSource: DataSource): Promise<void> {
       appliesToTickets: true,
       appliesToSnacks: false,
       birthdayWindowDays: 0,
+      incompatibleWithPoints: true,
     }),
   ]);
 }

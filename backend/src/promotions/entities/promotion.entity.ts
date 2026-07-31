@@ -148,6 +148,13 @@ export class Promotion {
   @Column({ type: 'int', default: 0 })
   birthdayWindowDays!: number;
 
+  /**
+   * RN-100 (HU-023): si `true`, la compra con este cupón
+   * no acumula puntos ni admite redención de puntos.
+   */
+  @Column({ type: 'boolean', default: false })
+  incompatibleWithPoints!: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 

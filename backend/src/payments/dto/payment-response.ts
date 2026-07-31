@@ -37,6 +37,10 @@ export type OrderView = {
   membershipDiscount: number;
   promoDiscount: number;
   giftcardAmount: number;
+  /** Descuento por puntos (HU-023). */
+  pointsDiscountAmount: number;
+  pointsRedeemed: number;
+  pointsEarned: number;
   tax: number;
   total: number;
   promoCode: string | null;

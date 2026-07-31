@@ -72,6 +72,7 @@ describe('PromotionsService', () => {
       appliesToSnacks: false,
       minMembershipLevel: null,
       birthdayWindowDays: 0,
+      incompatibleWithPoints: false,
       createdAt: new Date(),
       updatedAt: new Date(),
     }) as Promotion;

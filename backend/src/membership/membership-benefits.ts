@@ -4,7 +4,7 @@ import { MembershipLevel, MembershipStatus } from './enums/membership.enums';
  * Beneficios vigentes por nivel de membresía (RN-032 / HU-008).
  *
  * El login (HU-007) y `GET /membership` reutilizan esta tabla estática.
- * Subidas de nivel y puntos reales = HU-023.
+ * Subidas de nivel automáticas = HU-023 / RN-101.
  */
 export type MembershipBenefit = {
   code: string;

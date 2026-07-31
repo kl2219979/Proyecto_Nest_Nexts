@@ -7,6 +7,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { Invoice } from '../tickets/entities/invoice.entity';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { Membership } from './entities/membership.entity';
 import { Wallet } from './entities/wallet.entity';
 import { MembershipLevel, MembershipStatus } from './enums/membership.enums';
@@ -66,6 +67,12 @@ describe('MembershipService', () => {
         { provide: getRepositoryToken(Wallet), useValue: walletRepo },
         { provide: getRepositoryToken(User), useValue: userRepo },
         { provide: getRepositoryToken(Invoice), useValue: invoiceRepo },
+        {
+          provide: LoyaltyService,
+          useValue: {
+            getHistoryForMembership: jest.fn().mockResolvedValue([]),
+          },
+        },
         { provide: DataSource, useValue: dataSource },
       ],
     }).compile();

@@ -162,6 +162,14 @@ export class CreatePromotionDto {
   @Min(0)
   @Max(30)
   birthdayWindowDays?: number;
+
+  @ApiPropertyOptional({
+    default: false,
+    description: 'RN-100: no acumula ni admite puntos (HU-023)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  incompatibleWithPoints?: boolean;
 }
 
 /**
@@ -297,4 +305,11 @@ export class UpdatePromotionDto {
   @Min(0)
   @Max(30)
   birthdayWindowDays?: number;
+
+  @ApiPropertyOptional({
+    description: 'RN-100: no acumula ni admite puntos (HU-023)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  incompatibleWithPoints?: boolean;
 }

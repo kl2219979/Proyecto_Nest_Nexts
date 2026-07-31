@@ -12,6 +12,9 @@ import { Showtime } from '../movies/entities/showtime.entity';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { PromotionsService } from '../promotions/promotions.service';
+import { GiftcardsService } from '../giftcards/giftcards.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
+import { ApplyPointsDto } from '../loyalty/dto/loyalty.dto';
 import {
   CartResponse,
   CartSnackView,
@@ -34,7 +37,6 @@ import { CartSnackItem } from './entities/cart-snack-item.entity';
 import { CartTicketItem } from './entities/cart-ticket-item.entity';
 import { Cart } from './entities/cart.entity';
 import { CartStatus } from './enums/cart.enums';
-import { GiftcardsService } from '../giftcards/giftcards.service';
 
 /** TTL del carrito sin actividad (RN-046): 10 minutos. */
 export const CART_TTL_MS = 10 * 60 * 1000;
@@ -73,6 +75,7 @@ export class CartService {
    * @param snacksService - Catálogo y stock (HU-012 / RN-049).
    * @param promotionsService - Cupones formales (HU-026).
    * @param giftcardsService - Bonos digitales (HU-018 / RN-079).
+   * @param loyaltyService - Puntos de fidelización (HU-023).
    */
   constructor(
     @InjectRepository(Cart)
@@ -88,6 +91,7 @@ export class CartService {
     private readonly snacksService: SnacksService,
     private readonly promotionsService: PromotionsService,
     private readonly giftcardsService: GiftcardsService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   /**
@@ -155,6 +159,8 @@ export class CartService {
       promoStackable: null,
       giftcardCode: null,
       giftcardAmount: 0,
+      pointsRedeemed: 0,
+      pointsDiscountAmount: 0,
       tickets: reservation.summary.seats.map((seat) =>
         this.ticketRepo.create({
           showtimeId: showtime.id,
@@ -431,6 +437,18 @@ export class CartService {
       },
     );
 
+    /** RN-100: promo incompatible no combina con puntos ya aplicados. */
+    if (
+      applied.incompatibleWithPoints &&
+      (cart.pointsRedeemed > 0 || Number(cart.pointsDiscountAmount) > 0)
+    ) {
+      throw new ConflictException({
+        message:
+          'Esta promoción es incompatible con puntos ya aplicados (RN-100)',
+        code: 'POINTS_PROMO_INCOMPATIBLE',
+      });
+    }
+
     const code = applied.code ?? dto.code.trim().toUpperCase();
     if (cart.promoCode && cart.promoCode !== code) {
       cart.promoDiscountAmount =
@@ -443,6 +461,46 @@ export class CartService {
       cart.promoStackable = applied.stackable;
     }
 
+    return this.touchAndRespond(cart);
+  }
+
+  /**
+   * `POST /cart/apply-points`: aplica puntos como descuento (HU-023).
+   *
+   * RN-100 bloquea si hay promo incompatible. El débito real es al PAID.
+   *
+   * @param userId - Usuario del JWT.
+   * @param dto - Cantidad de puntos.
+   * @returns {Promise<CartResponse>} Totales con puntos.
+   */
+  async applyPoints(
+    userId: string,
+    dto: ApplyPointsDto,
+  ): Promise<CartResponse> {
+    await this.expireOverdueCarts(userId);
+    const cart = await this.requireActiveCart(userId);
+    await this.assertLocksStillHeld(cart);
+
+    cart.pointsRedeemed = 0;
+    cart.pointsDiscountAmount = 0;
+    const preview = await this.toResponse(cart, userId);
+    const maxApplicable = money(
+      preview.summary.subtotal -
+        preview.summary.membershipDiscount -
+        preview.summary.promoDiscount +
+        preview.summary.tax -
+        preview.summary.giftcardAmount,
+    );
+
+    const { points, amountCop } = await this.loyaltyService.previewForCart(
+      userId,
+      dto.points,
+      maxApplicable,
+      cart.promoCode,
+    );
+
+    cart.pointsRedeemed = points;
+    cart.pointsDiscountAmount = amountCop;
     return this.touchAndRespond(cart);
   }
 
@@ -472,7 +530,8 @@ export class CartService {
       preview.summary.subtotal -
         preview.summary.membershipDiscount -
         preview.summary.promoDiscount +
-        preview.summary.tax,
+        preview.summary.tax -
+        preview.summary.pointsDiscountAmount,
     );
 
     const { giftcard, amount } = await this.giftcardsService.previewForCart(
@@ -782,12 +841,16 @@ export class CartService {
     );
     const promoDiscount = money(Number(cart.promoDiscountAmount));
     const giftcardAmount = money(Number(cart.giftcardAmount));
+    const pointsDiscountAmount = money(Number(cart.pointsDiscountAmount));
     const afterDiscounts = Math.max(
       0,
       money(subtotal - membershipDiscount - promoDiscount),
     );
     const tax = money(afterDiscounts * CART_TAX_RATE);
-    const total = Math.max(0, money(afterDiscounts + tax - giftcardAmount));
+    const total = Math.max(
+      0,
+      money(afterDiscounts + tax - giftcardAmount - pointsDiscountAmount),
+    );
 
     const summary: CartSummary = {
       currency: 'COP',
@@ -797,6 +860,7 @@ export class CartService {
       membershipDiscount,
       promoDiscount,
       giftcardAmount,
+      pointsDiscountAmount,
       tax,
       taxRate: CART_TAX_RATE,
       total,
@@ -826,6 +890,10 @@ export class CartService {
       giftcard: {
         code: cart.giftcardCode,
         amount: giftcardAmount,
+      },
+      points: {
+        redeemed: cart.pointsRedeemed ?? 0,
+        discountAmount: pointsDiscountAmount,
       },
       tickets: ticketViews,
       snacks: snackViews,
