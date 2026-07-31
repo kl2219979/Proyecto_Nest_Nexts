@@ -28,6 +28,7 @@ import { CineflashModule } from './cineflash/cineflash.module';
 import { AiModule } from './ai/ai.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { SurveysModule } from './surveys/surveys.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -151,6 +152,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
     RecommendationsModule,
     /** Dashboard gerencial de KPIs (HU-025). */
     AnalyticsModule,
+    /** Encuestas de satisfacción post-visita (HU-027). */
+    SurveysModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */
     AdminModule,
   ],

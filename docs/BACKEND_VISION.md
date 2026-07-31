@@ -50,7 +50,8 @@
 | HU-021 Chatbot IA | **Hecho** | POST /ai/chat · POST /ai/history · Adapter OpenAI stub · RN-091…095 |
 | HU-022 Recomendaciones personalizadas | **Hecho** | GET /recommendations · POST /preferences · cron diario · RN-096…098 |
 | HU-025 Dashboard gerencial (KPIs) | **Hecho** | GET /dashboard · export PDF/Excel · period/filtros · comparativos |
-| HU-027 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-027) |
+| HU-027 Encuestas de satisfacción | **Hecho** | POST/GET /surveys · RN-108 asistencia · RN-109 1/compra |
+| HU-028 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-028) |
 
 ### Bitácora de avances
 
@@ -278,6 +279,15 @@
 - Guía `docs/features/hu-025-dashboard.md`.
 - Encuestas de satisfacción → HU-027.
 
+#### HU-027 — Encuestas de Satisfacción
+- Módulo `backend/src/surveys/`: entidad `Survey` (1:1 con `orderId`).
+- Endpoints JWT: `POST /surveys`, `GET /surveys`, `GET /surveys/:id`.
+- Calificaciones 1–5 (película, sala, sonido, imagen, comodidad, confitería, limpieza, servicio) + `recommendScore` 0–10 + comentarios.
+- RN-108: solo si el usuario tiene ticket `USED` de la orden (asistencia vía HU-024).
+- RN-109: una encuesta por compra (`UNIQUE orderId` + 409).
+- Guía `docs/features/hu-027-surveys.md`.
+- PQRS → HU-028.
+
 ---
 
 ## 1. Qué es este backend en una frase
@@ -470,6 +480,7 @@ Health OK
 - HU-021 guía: `docs/features/hu-021-ai-chatbot.md`
 - HU-022 guía: `docs/features/hu-022-recommendations.md`
 - HU-025 guía: `docs/features/hu-025-dashboard.md`
+- HU-027 guía: `docs/features/hu-027-surveys.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -483,5 +494,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-027 Encuestas de Satisfacción.
+Siguiente: HU-028 PQRS Integrado.
 ```

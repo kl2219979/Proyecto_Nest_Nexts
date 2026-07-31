@@ -67,6 +67,7 @@ alwaysApply: true
 - HU-021 Chatbot IA (POST /ai/chat, POST /ai/history, RN-091…095)
 - HU-022 recomendaciones personalizadas (GET /recommendations, POST /preferences, RN-096…098)
 - HU-025 Dashboard Gerencial de Indicadores (GET /dashboard, export PDF/Excel, KPIs)
+- HU-027 Encuestas de Satisfacción (POST/GET /surveys, RN-108…109)
 
 ## Siguiente
-- HU-027 Encuestas de Satisfacción
+- HU-028 PQRS Integrado
