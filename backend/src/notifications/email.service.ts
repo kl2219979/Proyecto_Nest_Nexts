@@ -572,6 +572,99 @@ export class EmailService {
   }
 
   /**
+   * Acuse de recibo PQRS (HU-028 / RN-112).
+   */
+  async sendPqrsCreated(params: {
+    userId: string;
+    toEmail: string;
+    ticketNumber: string;
+    categoryLabel: string;
+    subject: string;
+    statusLabel: string;
+    slaDueAt: string;
+    pqrsId: string;
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.toEmail,
+      template: EmailTemplate.PQRS_CREATED,
+      payload: {
+        ticketNumber: params.ticketNumber,
+        categoryLabel: params.categoryLabel,
+        subject: params.subject,
+        statusLabel: params.statusLabel,
+        slaDueAt: params.slaDueAt,
+        pqrsUrl: `${base}/api/v1/pqrs/${params.pqrsId}`,
+      },
+      relatedEntityType: 'PQRS',
+      relatedEntityId: params.pqrsId,
+      idempotent: true,
+    });
+  }
+
+  /**
+   * Actualización de PQRS (estado o comentario público) — RN-112.
+   */
+  async sendPqrsUpdated(params: {
+    userId: string;
+    toEmail: string;
+    ticketNumber: string;
+    categoryLabel: string;
+    subject: string;
+    statusLabel: string;
+    updateSummary: string;
+    pqrsId: string;
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.toEmail,
+      template: EmailTemplate.PQRS_UPDATED,
+      payload: {
+        ticketNumber: params.ticketNumber,
+        categoryLabel: params.categoryLabel,
+        subject: params.subject,
+        statusLabel: params.statusLabel,
+        updateSummary: params.updateSummary,
+        pqrsUrl: `${base}/api/v1/pqrs/${params.pqrsId}`,
+      },
+      relatedEntityType: 'PQRS_UPDATE',
+      relatedEntityId: `${params.pqrsId}:${Date.now()}`,
+    });
+  }
+
+  /**
+   * PQRS resuelta / cerrada (RN-112).
+   */
+  async sendPqrsResolved(params: {
+    userId: string;
+    toEmail: string;
+    ticketNumber: string;
+    categoryLabel: string;
+    subject: string;
+    statusLabel: string;
+    pqrsId: string;
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: params.userId,
+      toEmail: params.toEmail,
+      template: EmailTemplate.PQRS_RESOLVED,
+      payload: {
+        ticketNumber: params.ticketNumber,
+        categoryLabel: params.categoryLabel,
+        subject: params.subject,
+        statusLabel: params.statusLabel,
+        pqrsUrl: `${base}/api/v1/pqrs/${params.pqrsId}`,
+      },
+      relatedEntityType: 'PQRS_RESOLVED',
+      relatedEntityId: params.pqrsId,
+      idempotent: true,
+    });
+  }
+
+  /**
    * Pago rechazado.
    */
   async sendPaymentRejected(

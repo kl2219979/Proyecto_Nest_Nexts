@@ -29,6 +29,7 @@ import { AiModule } from './ai/ai.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SurveysModule } from './surveys/surveys.module';
+import { PqrsModule } from './pqrs/pqrs.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -154,6 +155,8 @@ import { SurveysModule } from './surveys/surveys.module';
     AnalyticsModule,
     /** Encuestas de satisfacción post-visita (HU-027). */
     SurveysModule,
+    /** PQRS integrado (HU-028). */
+    PqrsModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */
     AdminModule,
   ],

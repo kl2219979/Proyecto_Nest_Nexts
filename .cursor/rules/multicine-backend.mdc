@@ -68,6 +68,7 @@ alwaysApply: true
 - HU-022 recomendaciones personalizadas (GET /recommendations, POST /preferences, RN-096…098)
 - HU-025 Dashboard Gerencial de Indicadores (GET /dashboard, export PDF/Excel, KPIs)
 - HU-027 Encuestas de Satisfacción (POST/GET /surveys, RN-108…109)
+- HU-028 PQRS Integrado (POST/GET/PUT /pqrs, SLA, RN-110…112)
 
 ## Siguiente
-- HU-028 PQRS Integrado
+- HU-029 API Pública para Aplicaciones Externas

@@ -50,6 +50,12 @@ export enum EmailTemplate {
   PROMOTION = 'PROMOTION',
   GIFTCARD = 'GIFTCARD',
   MEMBERSHIP_BENEFITS = 'MEMBERSHIP_BENEFITS',
+  /** Acuse de recibo de PQRS (HU-028 / RN-112). */
+  PQRS_CREATED = 'PQRS_CREATED',
+  /** Actualización de estado o comentario público en PQRS. */
+  PQRS_UPDATED = 'PQRS_UPDATED',
+  /** Caso PQRS resuelto o cerrado. */
+  PQRS_RESOLVED = 'PQRS_RESOLVED',
 }
 
 /**

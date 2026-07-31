@@ -45,6 +45,9 @@ export const TEMPLATE_CATEGORY: Record<EmailTemplate, EmailCategory> = {
   [EmailTemplate.PROMOTION]: EmailCategory.MARKETING,
   [EmailTemplate.GIFTCARD]: EmailCategory.TRANSACTIONAL,
   [EmailTemplate.MEMBERSHIP_BENEFITS]: EmailCategory.MARKETING,
+  [EmailTemplate.PQRS_CREATED]: EmailCategory.TRANSACTIONAL,
+  [EmailTemplate.PQRS_UPDATED]: EmailCategory.TRANSACTIONAL,
+  [EmailTemplate.PQRS_RESOLVED]: EmailCategory.TRANSACTIONAL,
 };
 
 /**
@@ -70,6 +73,9 @@ const SUBJECTS: Record<EmailTemplate, string> = {
   [EmailTemplate.PROMOTION]: 'Nueva promoción Multicine',
   [EmailTemplate.GIFTCARD]: 'Tu bono de regalo Multicine',
   [EmailTemplate.MEMBERSHIP_BENEFITS]: 'Beneficios de tu membresía Multicine',
+  [EmailTemplate.PQRS_CREATED]: 'Recibimos tu PQRS — Multicine',
+  [EmailTemplate.PQRS_UPDATED]: 'Actualización de tu PQRS — Multicine',
+  [EmailTemplate.PQRS_RESOLVED]: 'Tu PQRS fue resuelta — Multicine',
 };
 
 /**
@@ -310,6 +316,39 @@ ${personal}
 <p><strong>Válido hasta:</strong> ${this.escape(String(ctx.expiresAt ?? ''))}</p>
 <p>Puedes redimirlo a tu billetera o aplicarlo en el carrito (entradas y confitería).</p>
 ${link(String(ctx.redeemUrl ?? '#'), 'Ver / redimir bono')}`;
+      }
+
+      case EmailTemplate.PQRS_CREATED: {
+        const ticket = String(ctx.ticketNumber ?? '');
+        const category = String(ctx.categoryLabel ?? 'PQRS');
+        const subject = String(ctx.subject ?? '');
+        const sla = String(ctx.slaDueAt ?? '');
+        return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p>Recibimos tu <strong>${this.escape(category)}</strong> con número <strong>${this.escape(ticket)}</strong>.</p>
+<p><strong>Asunto:</strong> ${this.escape(subject)}</p>
+<p><strong>Estado:</strong> ${this.escape(String(ctx.statusLabel ?? 'Abierta'))}</p>
+<p><strong>Plazo de atención (SLA):</strong> ${this.escape(sla)}</p>
+<p>Te avisaremos por correo cuando haya novedades.</p>
+${link(String(ctx.pqrsUrl ?? '#'), 'Ver seguimiento')}`;
+      }
+
+      case EmailTemplate.PQRS_UPDATED: {
+        const ticket = String(ctx.ticketNumber ?? '');
+        const summary = String(ctx.updateSummary ?? 'Hay una actualización en tu caso');
+        return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p>Tu caso <strong>${this.escape(ticket)}</strong> tiene una novedad.</p>
+<p>${this.escape(summary)}</p>
+<p><strong>Estado actual:</strong> ${this.escape(String(ctx.statusLabel ?? ''))}</p>
+${link(String(ctx.pqrsUrl ?? '#'), 'Ver seguimiento')}`;
+      }
+
+      case EmailTemplate.PQRS_RESOLVED: {
+        const ticket = String(ctx.ticketNumber ?? '');
+        return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p>Tu caso <strong>${this.escape(ticket)}</strong> fue marcado como <strong>${this.escape(String(ctx.statusLabel ?? 'Resuelta'))}</strong>.</p>
+<p><strong>Asunto:</strong> ${this.escape(String(ctx.subject ?? ''))}</p>
+<p>Gracias por ayudarnos a mejorar Multicine.</p>
+${link(String(ctx.pqrsUrl ?? '#'), 'Ver detalle')}`;
       }
 
       default:

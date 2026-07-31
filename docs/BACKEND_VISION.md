@@ -51,7 +51,8 @@
 | HU-022 Recomendaciones personalizadas | **Hecho** | GET /recommendations · POST /preferences · cron diario · RN-096…098 |
 | HU-025 Dashboard gerencial (KPIs) | **Hecho** | GET /dashboard · export PDF/Excel · period/filtros · comparativos |
 | HU-027 Encuestas de satisfacción | **Hecho** | POST/GET /surveys · RN-108 asistencia · RN-109 1/compra |
-| HU-028 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-028) |
+| HU-028 PQRS Integrado | **Hecho** | POST/GET/PUT /pqrs · SLA · asignación · RN-110…112 |
+| HU-029 API pública | Pendiente | Ver sección 3 (siguiente: HU-029) |
 
 ### Bitácora de avances
 
@@ -288,6 +289,15 @@
 - Guía `docs/features/hu-027-surveys.md`.
 - PQRS → HU-028.
 
+#### HU-028 — PQRS Integrado
+- Módulo `backend/src/pqrs/`: entidades `PqrsCase`, comentarios, adjuntos (URL), historial, SLA, contador.
+- Endpoints JWT: `POST/GET /pqrs`, `GET/PUT /pqrs/:id`, `GET/PUT /pqrs/sla`.
+- Categorías: Petición / Queja / Reclamo / Sugerencia / Felicitación.
+- RN-110 consecutivo `PQRS-YYYY-NNNNNN` · RN-111 SLA configurable (snapshot) · RN-112 emails.
+- Cliente: alta + seguimiento + comentarios/adjuntos; STAFF+: asignación interna + estados.
+- Guía `docs/features/hu-028-pqrs.md`.
+- API pública → HU-029.
+
 ---
 
 ## 1. Qué es este backend en una frase
@@ -481,6 +491,7 @@ Health OK
 - HU-022 guía: `docs/features/hu-022-recommendations.md`
 - HU-025 guía: `docs/features/hu-025-dashboard.md`
 - HU-027 guía: `docs/features/hu-027-surveys.md`
+- HU-028 guía: `docs/features/hu-028-pqrs.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -494,5 +505,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-028 PQRS Integrado.
+Siguiente: HU-029 API Pública para Aplicaciones Externas.
 ```
