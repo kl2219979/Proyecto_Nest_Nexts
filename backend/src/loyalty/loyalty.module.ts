@@ -16,11 +16,12 @@ import { LoyaltyService } from './loyalty.service';
  * - Integración: carrito (`apply-points`) + pagos (`earnForOrder` / `consumeForOrder`)
  *
  * Exporta `LoyaltyService` sin importar Cart/Payments (evita ciclos).
+ * `forwardRef(AuthModule)`: ciclo Auth → Membership → Loyalty → Auth (ES circular).
  * `forwardRef(MembershipModule)` por historial en `GET /membership`.
  */
 @Module({
   imports: [
-    AuthModule,
+    forwardRef(() => AuthModule),
     forwardRef(() => MembershipModule),
     TypeOrmModule.forFeature([PointLedgerEntry, Membership, Promotion]),
   ],

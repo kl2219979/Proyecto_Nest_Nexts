@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { User } from '../auth/entities/user.entity';
@@ -23,10 +23,12 @@ import { TicketsService } from './tickets.service';
  * Generación automática al webhook APPROVED vía `fulfillPaidOrder`.
  * Reprogramación orquestada en `RescheduleModule` (HU-016).
  * Cesión orquestada en `TransferModule` (HU-017).
+ *
+ * `forwardRef(AuthModule)`: ciclo Auth → Transfer → Tickets → Auth.
  */
 @Module({
   imports: [
-    AuthModule,
+    forwardRef(() => AuthModule),
     TypeOrmModule.forFeature([Ticket, Invoice, Order, User, UserProfile]),
   ],
   controllers: [TicketsController, InvoiceController],

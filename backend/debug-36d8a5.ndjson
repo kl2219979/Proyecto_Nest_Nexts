@@ -1,0 +1,2 @@
+{"sessionId":"36d8a5","runId":"post-fix","hypothesisId":"E","location":"main.ts:bootstrap-start","message":"Bootstrap starting NestFactory.create","data":{},"timestamp":1785508860175}
+{"sessionId":"36d8a5","runId":"post-fix","hypothesisId":"E","location":"main.ts:bootstrap-ok","message":"NestFactory.create succeeded","data":{},"timestamp":1785508860491}

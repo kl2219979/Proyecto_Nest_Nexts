@@ -24,7 +24,7 @@ import { TransferService } from './transfer.service';
 @Module({
   imports: [
     forwardRef(() => AuthModule),
-    TicketsModule,
+    forwardRef(() => TicketsModule),
     forwardRef(() => NotificationsModule),
     TypeOrmModule.forFeature([TicketTransfer, Ticket, User]),
   ],

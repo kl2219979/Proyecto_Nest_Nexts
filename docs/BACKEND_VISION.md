@@ -45,7 +45,7 @@
 | HU-016 Cambio de función | **Hecho** | GET /orders · available-functions · PUT reschedule · regenerate · RN-065…070 |
 | HU-017 Transferencia entradas | **Hecho** | POST/GET /tickets/transfer · accept · invite · RN-071…075 |
 | HU-018 Bonos de regalo | **Hecho** | POST/GET /giftcards · redeem · webhook · cart apply · RN-076…079 |
-| HU-023 Fidelización / puntos | **Hecho** | GET/POST /points · levels · cart apply · earn/redeem · RN-099…101 |
+| HU-023 Fidelización / puntos | **Hecho** | GET/POST /points · levels · cart apply · earn/redeem · RN-099…101 · fix `forwardRef(AuthModule)` en LoyaltyModule (2026-07-31) |
 | HU-019 Cine Flash | **Hecho** | Cron 5 min · POST /cineflash/process · GET /movies/cineflash · RN-080…086 |
 | HU-021 Chatbot IA | **Hecho** | POST /ai/chat · POST /ai/history · Adapter OpenAI stub · RN-091…095 |
 | HU-022 Recomendaciones personalizadas | **Hecho** | GET /recommendations · POST /preferences · cron diario · RN-096…098 |
@@ -308,6 +308,30 @@
 - Extra: `GET /orders/:id` (first-party). Swagger `api-key` (RN-118).
 - Guía `docs/features/hu-029-public-api.md`.
 - **Backlog Sprint 5 completo** (no hay HU pendiente).
+
+#### Incidente — Arranque Nest / dependencia circular (2026-07-31)
+
+**Síntomas (runtime)**
+- Con `docker compose up`, el servicio `db` quedaba healthy, pero `api` no escuchaba en el puerto 3000.
+- `GET /api/v1/health` fallaba (sin socket HTTP).
+- Nest lanzaba `UndefinedModuleException`:
+  - Primero se observó en `TicketsModule` (imports[0] undefined) en un reinicio intermedio.
+  - El fallo estable fue: *Nest cannot create the LoyaltyModule instance. The module at index [0] of the LoyaltyModule "imports" array is undefined.*
+  - Scope Nest: `AppModule → NotificationsModule → AuthModule → MembershipModule` → `LoyaltyModule`.
+
+**Causa raíz**
+- Ciclo de módulos ES/Nest: **Auth → Membership → Loyalty → Auth**.
+- En `loyalty.module.ts`, `AuthModule` se importaba **sin** `forwardRef()`.
+- Por el orden de carga CommonJS (Loyalty se evalúa antes de que `AuthModule` exporte la clase), `imports[0]` quedaba congelado como `undefined`.
+- Otros eslabones del mismo grafo (`Membership`, `Transfer`, `Tickets`) ya usaban `forwardRef` y no bloqueaban el arranque; el eslabón roto era Loyalty.
+- Evidencia de debug: al load de `LoyaltyModule`, `typeof AuthModule === "undefined"`; tras diferir con `forwardRef`, Nest resolvía `AuthModule` correctamente y el bootstrap completaba.
+
+**Solución implementada**
+- En `backend/src/loyalty/loyalty.module.ts`: cambiar `AuthModule` por `forwardRef(() => AuthModule)` (junto al `forwardRef` ya existente de `MembershipModule`).
+- Verificación: `Nest application successfully started`, `GET /api/v1/health` → `200` con `"database":"up"`, Swagger disponible.
+
+**Lección**
+- En ciclos Auth ↔ Membership ↔ Loyalty (y Auth ↔ Transfer ↔ Tickets), ambos lados del import de módulo deben usar `forwardRef(() => …)`; un import “bare” captura `undefined` si el módulo aún no terminó de evaluarse.
 
 ---
 

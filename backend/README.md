@@ -1,98 +1,126 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Multicine API (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST de la **Plataforma Web Multicine**: cartelera, cuenta/membresía, compra de sillas y confitería, pagos, entradas/QR, admin, promociones, fidelización, IA e integraciones externas.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+> Visión y estado de HUs: [`docs/BACKEND_VISION.md`](../docs/BACKEND_VISION.md)  
+> Backlog: [`recursos/PRODUCT_BACKLOG_ORDENADO.md`](../recursos/PRODUCT_BACKLOG_ORDENADO.md)
 
-## Description
+## Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Pieza | Tecnología |
+|---|---|
+| Framework | NestJS 11 + TypeScript |
+| ORM / DB | TypeORM + PostgreSQL |
+| Auth | JWT (usuario) · API Key / OAuth client_credentials (terceros) |
+| Docs | Swagger/OpenAPI en `/api/docs` |
+| Infra local | Docker Compose (`api` + `db`) |
 
-## Project setup
+## Prefijos
 
-```bash
-$ npm install
-```
+| Prefijo | Uso |
+|---|---|
+| `/api/v1` | API first-party (web / app Multicine) |
+| `/api/v1/public` | Facade para apps externas (HU-029) |
+| `/api/admin` | Backoffice RBAC (HU-020) |
+| `/api/docs` | Swagger UI |
 
-## Compile and run the project
+Health: `GET /api/v1/health`
+
+## Arranque rápido
+
+Desde la **raíz del monorepo**:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp .env.example .env
+docker compose up --build
 ```
 
-## Run tests
+API: http://localhost:3000/api/v1 · Swagger: http://localhost:3000/api/docs
+
+### Desarrollo local (sin Compose para la API)
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# Postgres debe estar disponible (Compose solo db, o local)
+cd backend
+npm install
+npm run start:dev
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Scripts útiles:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run build        # compilar
+npm run start:dev    # watch
+npm run start:prod   # dist/
+npm run test         # unitarios
+npm run test:e2e     # e2e
+npm run lint         # ESLint
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Variables de entorno: plantilla en [`.env.example`](../.env.example). Guía: [`docs/config/`](../docs/config/README.md).
 
-## Resources
+## Módulos (HU-001 … HU-029)
 
-Check out a few resources that may come in handy when working with NestJS:
+Todas las historias del backlog Sprint 1–5 están implementadas.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+| Dominio | Carpeta `src/` | Notas |
+|---|---|---|
+| Health / infra | `health/`, `config/` | HU-001 |
+| Ubicación | `locations/` | países → cines |
+| Cartelera | `movies/` | semanal, detalle, estrenos, funciones |
+| Auth / perfil | `auth/`, `profile/` | registro, JWT, refresh |
+| Membresía / puntos | `membership/`, `loyalty/` | QR socio, niveles |
+| Sillas / carrito | `seats/`, `cart/` | locks 10 min |
+| Confitería | `snacks/` | catálogo + carrito |
+| Pagos / órdenes | `payments/`, `reschedule/` | webhook HMAC, cambio de función |
+| Tickets / factura | `tickets/`, `transfer/` | PDF/QR, cesión, validación puerta |
+| Notificaciones | `notifications/` | email + prefs + cron |
+| Admin | `admin/` | `/api/admin/*` |
+| Promos / Cine Flash | `promotions/`, `cineflash/` | cupones + flash automático |
+| Giftcards | `giftcards/` | compra / redeem |
+| IA / recomendaciones | `ai/`, `recommendations/` | chatbot + feed personalizado |
+| Analytics | `analytics/` | dashboard KPIs |
+| Encuestas / PQRS | `surveys/`, `pqrs/` | post-visita + casos |
+| **API pública** | `public-api/` | API Key, OAuth, scopes, rate limit |
 
-## Support
+## API pública (HU-029)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Consumidores externos (móvil, kiosco, partner):
 
-## Stay in touch
+1. Credencial: header `X-API-Key` **o** `POST /api/v1/oauth/token` (`client_credentials`)
+2. Catálogo y operaciones bajo `/api/v1/public/*` con scopes
+3. Admin de clientes: `/api/admin/api-clients`
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Seed demo:
 
-## License
+| Campo | Valor |
+|---|---|
+| `clientId` | `mcc_demo_kiosk` |
+| `clientSecret` | `mcs_demo_secret_change_me` |
+| `apiKey` | `mck_demo_public_api_key_change_me` |
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+curl -s -H "X-API-Key: mck_demo_public_api_key_change_me" \
+  "http://localhost:3000/api/v1/public/countries"
+```
+
+Guía: [`docs/features/hu-029-public-api.md`](../docs/features/hu-029-public-api.md)
+
+## Documentación por historia
+
+Guías en [`docs/features/`](../docs/features/) (`hu-002-locations.md` … `hu-029-public-api.md`).
+
+Tooling / Docker / env: [`docs/config/README.md`](../docs/config/README.md)
+
+## Convenciones
+
+- Prefijo versionado `/api/v1` (RN-113)
+- Controller → Service → Repository (TypeORM)
+- JSDoc educativo en clases y métodos públicos
+- Secretos solo por `.env` (no commitear)
+- Alcance acotado al backlog; no inventar endpoints fuera de `BACKEND_VISION`
+
+## Licencia
+
+Código del proyecto Multicine: uso académico / del repositorio del curso.  
+NestJS framework: [MIT](https://github.com/nestjs/nest/blob/master/LICENSE).
