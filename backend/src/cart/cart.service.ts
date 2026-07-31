@@ -25,6 +25,7 @@ import {
   UpdateCartSnackDto,
 } from './dto/cart-snacks.dto';
 import {
+  ApplyGiftcardDto,
   ApplyPromoDto,
   CreateCartDto,
   UpdateCartDto,
@@ -33,6 +34,7 @@ import { CartSnackItem } from './entities/cart-snack-item.entity';
 import { CartTicketItem } from './entities/cart-ticket-item.entity';
 import { Cart } from './entities/cart.entity';
 import { CartStatus } from './enums/cart.enums';
+import { GiftcardsService } from '../giftcards/giftcards.service';
 
 /** TTL del carrito sin actividad (RN-046): 10 minutos. */
 export const CART_TTL_MS = 10 * 60 * 1000;
@@ -70,6 +72,7 @@ export class CartService {
    * @param membershipService - Nivel y beneficios (RN-047 / RN-051).
    * @param snacksService - Catálogo y stock (HU-012 / RN-049).
    * @param promotionsService - Cupones formales (HU-026).
+   * @param giftcardsService - Bonos digitales (HU-018 / RN-079).
    */
   constructor(
     @InjectRepository(Cart)
@@ -84,6 +87,7 @@ export class CartService {
     private readonly membershipService: MembershipService,
     private readonly snacksService: SnacksService,
     private readonly promotionsService: PromotionsService,
+    private readonly giftcardsService: GiftcardsService,
   ) {}
 
   /**
@@ -439,6 +443,45 @@ export class CartService {
       cart.promoStackable = applied.stackable;
     }
 
+    return this.touchAndRespond(cart);
+  }
+
+  /**
+   * `POST /cart/apply-giftcard`: aplica bono digital al total (HU-018).
+   *
+   * RN-077 uso parcial · RN-079 entradas + confitería.
+   * El débito real ocurre al confirmar el pago (webhook APPROVED).
+   *
+   * @param userId - Usuario del JWT.
+   * @param dto - Código del bono.
+   * @returns {Promise<CartResponse>} Totales con giftcard.
+   */
+  async applyGiftcard(
+    userId: string,
+    dto: ApplyGiftcardDto,
+  ): Promise<CartResponse> {
+    await this.expireOverdueCarts(userId);
+    const cart = await this.requireActiveCart(userId);
+    await this.assertLocksStillHeld(cart);
+
+    /** Calcula base pagable sin giftcard para topar el descuento. */
+    cart.giftcardCode = null;
+    cart.giftcardAmount = 0;
+    const preview = await this.toResponse(cart, userId);
+    const maxApplicable = money(
+      preview.summary.subtotal -
+        preview.summary.membershipDiscount -
+        preview.summary.promoDiscount +
+        preview.summary.tax,
+    );
+
+    const { giftcard, amount } = await this.giftcardsService.previewForCart(
+      dto.code,
+      maxApplicable,
+    );
+
+    cart.giftcardCode = giftcard.code;
+    cart.giftcardAmount = amount;
     return this.touchAndRespond(cart);
   }
 

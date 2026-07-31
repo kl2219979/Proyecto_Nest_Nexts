@@ -211,6 +211,8 @@ export class MembershipService {
    * La carga formal de giftcards llega en HU-018; aquí solo se usa como
    * “saldo a favor” tras un cambio de función más barato.
    *
+   * También acredita al redimir un bono (`POST /giftcards/redeem`).
+   *
    * @param userId - Titular de la billetera.
    * @param amount - Monto positivo a sumar (COP).
    * @returns Nuevo balance como string decimal.

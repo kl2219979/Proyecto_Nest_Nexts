@@ -44,7 +44,8 @@
 | HU-026 Promociones y cupones | **Hecho** | CRUD /promotions · RN-105…107 · carrito + precios · redenciones |
 | HU-016 Cambio de función | **Hecho** | GET /orders · available-functions · PUT reschedule · regenerate · RN-065…070 |
 | HU-017 Transferencia entradas | **Hecho** | POST/GET /tickets/transfer · accept · invite · RN-071…075 |
-| HU-018 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-018) |
+| HU-018 Bonos de regalo | **Hecho** | POST/GET /giftcards · redeem · webhook · cart apply · RN-076…079 |
+| HU-023 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-023) |
 
 ### Bitácora de avances
 
@@ -214,6 +215,15 @@
 - Correo `TICKET_TRANSFER` (request / invite / accepted); orden/factura del comprador original intactas.
 - Guía `docs/features/hu-017-transfer.md`.
 - Giftcards → HU-018.
+
+#### HU-018 — Compra y Envío de Bonos de Regalo Digitales
+- Módulo `backend/src/giftcards/`: entidad `Giftcard` + `GiftcardsService` + webhook propio + cron de entrega.
+- Endpoints: `POST/GET /giftcards`, `GET /giftcards/:code`, `POST /giftcards/redeem`, `POST /giftcards/webhook`.
+- Compra con pasarela stub (AES/HMAC reutilizado); tras APPROVED: código `MCGC-*` + QR + correo inmediato o `scheduledSendAt`.
+- RN-076 código único · RN-077 uso parcial · RN-078 expiración · RN-079 entradas+snacks vía `POST /cart/apply-giftcard`.
+- Redención a billetera (`Wallet`) o descuento en carrito (débito al PAID de la orden).
+- Guía `docs/features/hu-018-giftcards.md`.
+- Fidelización / puntos → HU-023.
 
 ---
 
@@ -401,6 +411,7 @@ Health OK
 - HU-026 guía: `docs/features/hu-026-promotions.md`
 - HU-016 guía: `docs/features/hu-016-reschedule.md`
 - HU-017 guía: `docs/features/hu-017-transfer.md`
+- HU-018 guía: `docs/features/hu-018-giftcards.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -414,5 +425,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-018 Compra y Envío de Bonos de Regalo Digitales.
+Siguiente: HU-023 Programa de Fidelización y Acumulación de Puntos.
 ```

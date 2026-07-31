@@ -12,6 +12,7 @@ import { User } from '../auth/entities/user.entity';
 import { CartService } from '../cart/cart.service';
 import { EmailService } from '../notifications/email.service';
 import { PromotionsService } from '../promotions/promotions.service';
+import { GiftcardsService } from '../giftcards/giftcards.service';
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { TicketsService } from '../tickets/tickets.service';
@@ -187,6 +188,9 @@ describe('PaymentsService', () => {
   const promotionsService = {
     recordRedemptions: jest.fn().mockResolvedValue(undefined),
   };
+  const giftcardsService = {
+    consumeForOrder: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -224,6 +228,7 @@ describe('PaymentsService', () => {
         { provide: PaymentGatewayService, useValue: gateway },
         { provide: EmailService, useValue: emailService },
         { provide: PromotionsService, useValue: promotionsService },
+        { provide: GiftcardsService, useValue: giftcardsService },
       ],
     }).compile();
 

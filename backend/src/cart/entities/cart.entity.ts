@@ -94,7 +94,7 @@ export class Cart {
   @Column({ type: 'boolean', nullable: true })
   promoStackable!: boolean | null;
 
-  /** Código de giftcard (redención real = HU-018). */
+  /** Código de giftcard aplicado (HU-018). */
   @Column({ type: 'varchar', length: 40, nullable: true })
   giftcardCode!: string | null;
 

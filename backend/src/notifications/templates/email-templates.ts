@@ -274,6 +274,24 @@ ${link(String(ctx.ticketsUrl ?? '#'), 'Ver mis entradas')}`;
 ${link(String(ctx.acceptUrl ?? '#'), 'Aceptar transferencia')}`;
       }
 
+      case EmailTemplate.GIFTCARD: {
+        const code = String(ctx.code ?? '');
+        const value = String(ctx.faceValue ?? '');
+        const theme = String(ctx.theme ?? 'GENERIC');
+        const personal = ctx.message
+          ? `<p style="font-style:italic;">“${this.escape(String(ctx.message))}”</p>`
+          : '';
+        return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
+<p><strong>${this.escape(String(ctx.purchaserEmail ?? 'Alguien'))}</strong> te envió un bono de regalo Multicine.</p>
+<p><strong>Tema:</strong> ${this.escape(theme)} · <strong>Valor:</strong> $${this.escape(value)} COP</p>
+${personal}
+<p><strong>Código:</strong> ${this.escape(code)}</p>
+<p><strong>QR:</strong> ${this.escape(String(ctx.qrPayload ?? code))}</p>
+<p><strong>Válido hasta:</strong> ${this.escape(String(ctx.expiresAt ?? ''))}</p>
+<p>Puedes redimirlo a tu billetera o aplicarlo en el carrito (entradas y confitería).</p>
+${link(String(ctx.redeemUrl ?? '#'), 'Ver / redimir bono')}`;
+      }
+
       default:
         return `<p>Hola <strong>${this.escape(name)}</strong>,</p>
 <p>${this.escape(String(ctx.message ?? 'Tienes una nueva notificación de Multicine.'))}</p>`;

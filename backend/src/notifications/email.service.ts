@@ -534,6 +534,44 @@ export class EmailService {
   }
 
   /**
+   * Entrega de bono de regalo digital (HU-018).
+   */
+  async sendGiftcard(params: {
+    toEmail: string;
+    recipientName: string;
+    purchaserEmail: string;
+    code: string;
+    qrPayload: string;
+    faceValue: string;
+    remainingBalance: string;
+    message: string | null;
+    theme: string;
+    expiresAt: string;
+    giftcardId: string;
+  }): Promise<EmailNotification> {
+    const base = this.publicUrl();
+    return this.enqueueAndSend({
+      userId: null,
+      toEmail: params.toEmail,
+      template: EmailTemplate.GIFTCARD,
+      payload: {
+        recipientName: params.recipientName,
+        purchaserEmail: params.purchaserEmail,
+        code: params.code,
+        qrPayload: params.qrPayload,
+        faceValue: params.faceValue,
+        remainingBalance: params.remainingBalance,
+        message: params.message,
+        theme: params.theme,
+        expiresAt: params.expiresAt,
+        redeemUrl: `${base}/api/v1/giftcards/${encodeURIComponent(params.code)}`,
+      },
+      relatedEntityType: 'GIFTCARD',
+      relatedEntityId: params.giftcardId,
+    });
+  }
+
+  /**
    * Pago rechazado.
    */
   async sendPaymentRejected(

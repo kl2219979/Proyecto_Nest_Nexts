@@ -61,6 +61,7 @@ alwaysApply: true
 - HU-026 promociones y cupones (CRUD, RN-105…107, carrito + precios)
 - HU-016 cambio de función (GET /orders, available-functions, PUT reschedule, regenerate, RN-065…070)
 - HU-017 transferencia de entradas (POST/GET /tickets/transfer, accept, invite, RN-071…075)
+- HU-018 bonos de regalo digitales (POST/GET /giftcards, redeem, webhook, cart apply, RN-076…079)
 
 ## Siguiente
-- HU-018 Compra y Envío de Bonos de Regalo Digitales
+- HU-023 Programa de Fidelización y Acumulación de Puntos

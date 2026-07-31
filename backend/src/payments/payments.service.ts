@@ -13,6 +13,7 @@ import { In, Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { CartService, CART_TTL_MS } from '../cart/cart.service';
 import type { CartResponse } from '../cart/dto/cart-response';
+import { GiftcardsService } from '../giftcards/giftcards.service';
 import { EmailService } from '../notifications/email.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { SeatsService } from '../seats/seats.service';
@@ -67,6 +68,7 @@ export class PaymentsService {
    * @param gateway - Adapter AES + firma webhook.
    * @param emailService - Correo compra / rechazo (HU-015).
    * @param promotionsService - Redenciones de cupón (HU-026 / RN-107).
+   * @param giftcardsService - Débito de bono aplicado (HU-018).
    */
   constructor(
     @InjectRepository(Order)
@@ -88,6 +90,7 @@ export class PaymentsService {
     private readonly gateway: PaymentGatewayService,
     private readonly emailService: EmailService,
     private readonly promotionsService: PromotionsService,
+    private readonly giftcardsService: GiftcardsService,
   ) {}
 
   /**
@@ -397,6 +400,14 @@ export class PaymentsService {
       Number(order.promoDiscount),
     );
 
+    /** HU-018: debita saldo del bono aplicado al carrito. */
+    if (order.giftcardCode && Number(order.giftcardAmount) > 0) {
+      await this.giftcardsService.consumeForOrder(
+        order.giftcardCode,
+        Number(order.giftcardAmount),
+      );
+    }
+
     /** HU-014: entradas digitales + factura electrónica. */
     const docs = await this.ticketsService.fulfillPaidOrder(order.id);
     const refreshedOrder = await this.orderRepo.findOneOrFail({
@@ -507,6 +518,7 @@ export class PaymentsService {
       membershipDiscount: view.summary.membershipDiscount,
       promoDiscount: view.summary.promoDiscount,
       giftcardAmount: view.summary.giftcardAmount,
+      giftcardCode: view.giftcard.code,
       tax: view.summary.tax,
       total: view.summary.total,
       promoCode: view.promo.code,

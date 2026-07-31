@@ -29,7 +29,7 @@ import {
   RemoveCartSnackDto,
   UpdateCartSnackDto,
 } from './dto/cart-snacks.dto';
-import { ApplyPromoDto, CreateCartDto, UpdateCartDto } from './dto/cart.dto';
+import { ApplyPromoDto, CreateCartDto, UpdateCartDto, ApplyGiftcardDto } from './dto/cart.dto';
 
 /**
  * Carrito de compras (HU-011 + confitería HU-012).
@@ -41,6 +41,7 @@ import { ApplyPromoDto, CreateCartDto, UpdateCartDto } from './dto/cart.dto';
  * - `DELETE /cart`
  * - `POST   /cart/apply-membership`
  * - `POST   /cart/apply-promo`
+ * - `POST   /cart/apply-giftcard`
  * - `POST   /cart/snacks`
  * - `PUT    /cart/snacks`
  * - `DELETE /cart/snacks`
@@ -251,5 +252,31 @@ export class CartController {
     @Body() dto: ApplyPromoDto,
   ): Promise<CartResponse> {
     return this.cartService.applyPromo(user.userId, dto);
+  }
+
+  /**
+   * Aplica un bono de regalo digital (HU-018 / RN-079).
+   *
+   * @param user - Usuario del Access JWT.
+   * @param dto - Código del bono.
+   * @returns {Promise<CartResponse>} Totales con giftcard.
+   */
+  @Post('apply-giftcard')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Aplicar bono de regalo al carrito',
+    description:
+      'HU-018 · RN-077 uso parcial · RN-079 entradas + confitería. ' +
+      'El saldo se debita al confirmar el pago.',
+  })
+  @ApiOkResponse({ description: 'Bono aplicado' })
+  @ApiConflictResponse({ description: 'Expirado, redimido o sin parcial' })
+  @ApiNotFoundResponse({ description: 'Código o carrito inexistente' })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  applyGiftcard(
+    @CurrentUser() user: AuthUser,
+    @Body() dto: ApplyGiftcardDto,
+  ): Promise<CartResponse> {
+    return this.cartService.applyGiftcard(user.userId, dto);
   }
 }

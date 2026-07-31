@@ -22,6 +22,7 @@ import { SeatsModule } from './seats/seats.module';
 import { SnacksModule } from './snacks/snacks.module';
 import { TicketsModule } from './tickets/tickets.module';
 import { TransferModule } from './transfer/transfer.module';
+import { GiftcardsModule } from './giftcards/giftcards.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -131,6 +132,8 @@ import { TransferModule } from './transfer/transfer.module';
     RescheduleModule,
     /** Transferencia de entradas a otro usuario (HU-017). */
     TransferModule,
+    /** Bonos de regalo digitales (HU-018). */
+    GiftcardsModule,
     /** Promociones y cupones (HU-026). */
     PromotionsModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */

@@ -79,6 +79,10 @@ export class Order {
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   giftcardAmount!: number;
 
+  /** Código de bono aplicado (HU-018); se debita al PAID. */
+  @Column({ type: 'varchar', length: 40, nullable: true })
+  giftcardCode!: string | null;
+
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   tax!: number;
 

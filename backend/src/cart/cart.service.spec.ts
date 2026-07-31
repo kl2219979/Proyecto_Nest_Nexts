@@ -18,6 +18,7 @@ import {
 import { SeatsService } from '../seats/seats.service';
 import { SnacksService } from '../snacks/snacks.service';
 import { PromotionsService } from '../promotions/promotions.service';
+import { GiftcardsService } from '../giftcards/giftcards.service';
 import { CartService, CART_TAX_RATE } from './cart.service';
 import { CartSnackItem } from './entities/cart-snack-item.entity';
 import { CartTicketItem } from './entities/cart-ticket-item.entity';
@@ -67,6 +68,9 @@ describe('CartService', () => {
   const promotionsService = {
     buildCartContext: jest.fn(),
     applyCodeToCart: jest.fn(),
+  };
+  const giftcardsService = {
+    previewForCart: jest.fn(),
   };
 
   const futureStarts = new Date(Date.now() + 3 * 60 * 60 * 1000);
@@ -148,6 +152,7 @@ describe('CartService', () => {
         { provide: MembershipService, useValue: membershipService },
         { provide: SnacksService, useValue: snacksService },
         { provide: PromotionsService, useValue: promotionsService },
+        { provide: GiftcardsService, useValue: giftcardsService },
       ],
     }).compile();
 

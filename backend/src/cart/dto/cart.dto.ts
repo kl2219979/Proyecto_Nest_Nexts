@@ -52,3 +52,13 @@ export class ApplyPromoDto {
   @MaxLength(40)
   code!: string;
 }
+
+/**
+ * Body de `POST /cart/apply-giftcard` (HU-018).
+ */
+export class ApplyGiftcardDto {
+  @ApiProperty({ example: 'MCGC-A1B2C3D4', description: 'Código del bono' })
+  @IsString()
+  @MaxLength(40)
+  code!: string;
+}

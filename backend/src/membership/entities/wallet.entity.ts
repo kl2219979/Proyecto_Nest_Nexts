@@ -13,7 +13,7 @@ import { User } from '../../auth/entities/user.entity';
  * Billetera de bonos / giftcards del usuario (HU-006).
  *
  * Se crea vacía (`balance = 0`) al registrar.
- * Carga y redención real = HU-018.
+ * Carga y redención = HU-018 (`POST /giftcards/redeem` y consumo en carrito).
  */
 @Entity('wallets')
 export class Wallet {
