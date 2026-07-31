@@ -49,7 +49,8 @@
 | HU-019 Cine Flash | **Hecho** | Cron 5 min · POST /cineflash/process · GET /movies/cineflash · RN-080…086 |
 | HU-021 Chatbot IA | **Hecho** | POST /ai/chat · POST /ai/history · Adapter OpenAI stub · RN-091…095 |
 | HU-022 Recomendaciones personalizadas | **Hecho** | GET /recommendations · POST /preferences · cron diario · RN-096…098 |
-| HU-025 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-025) |
+| HU-025 Dashboard gerencial (KPIs) | **Hecho** | GET /dashboard · export PDF/Excel · period/filtros · comparativos |
+| HU-027 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-027) |
 
 ### Bitácora de avances
 
@@ -267,6 +268,16 @@
 - Guía `docs/features/hu-022-recommendations.md`.
 - Dashboard KPIs gerenciales → HU-025.
 
+#### HU-025 — Dashboard Gerencial de Indicadores (KPIs)
+- Módulo `backend/src/analytics/`: agregados en tiempo real sin tablas nuevas.
+- Endpoints ADMIN+: `GET /dashboard`, `GET /dashboard/export.pdf`, `GET /dashboard/export.xlsx`.
+- Filtros: `period` (daily/weekly/monthly/yearly), `from`/`to`, `cityId`, `cinemaId`, `limit`.
+- KPIs: ventas, entradas, ocupación, snacks, Cine Flash, bonos, membresías, usuarios activos, conversión, cancelaciones, transferencias, ingresos.
+- Serie temporal + tops (películas/ciudades/complejos/snacks) + comparativo vs. período anterior.
+- Export PDF (PDFKit) y CSV UTF-8 BOM compatible con Excel.
+- Guía `docs/features/hu-025-dashboard.md`.
+- Encuestas de satisfacción → HU-027.
+
 ---
 
 ## 1. Qué es este backend en una frase
@@ -458,6 +469,7 @@ Health OK
 - HU-019 guía: `docs/features/hu-019-cineflash.md`
 - HU-021 guía: `docs/features/hu-021-ai-chatbot.md`
 - HU-022 guía: `docs/features/hu-022-recommendations.md`
+- HU-025 guía: `docs/features/hu-025-dashboard.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -471,5 +483,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-025 Dashboard Gerencial de Indicadores (KPIs).
+Siguiente: HU-027 Encuestas de Satisfacción.
 ```

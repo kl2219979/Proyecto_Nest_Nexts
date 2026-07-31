@@ -77,7 +77,7 @@ admin_audit_logs          RN-087 / RN-090
 |---|---|
 | Promociones / cupones formales | **HU-026** (hecho) |
 | Cine Flash automático | HU-019 |
-| Dashboard KPI gerencial profundo | HU-025 |
+| Dashboard KPI gerencial profundo | **HU-025** (hecho) |
 | Reembolsos / combos / festivos | no en visión HU-020 |
 
 ## Cómo probar

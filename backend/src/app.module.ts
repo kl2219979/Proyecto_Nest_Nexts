@@ -27,6 +27,7 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 import { CineflashModule } from './cineflash/cineflash.module';
 import { AiModule } from './ai/ai.module';
 import { RecommendationsModule } from './recommendations/recommendations.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -148,6 +149,8 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
     AiModule,
     /** Motor de recomendaciones personalizadas (HU-022). */
     RecommendationsModule,
+    /** Dashboard gerencial de KPIs (HU-025). */
+    AnalyticsModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */
     AdminModule,
   ],

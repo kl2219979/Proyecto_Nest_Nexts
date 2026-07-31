@@ -47,7 +47,7 @@ import { AdminUsersService } from './services/admin-users.service';
  *
  * @remarks
  * Promociones formales: CRUD en `AdminPromotionsController` (HU-026).
- * Cine Flash automático / KPIs gerenciales = HU-019 / HU-025.
+ * Cine Flash automático = HU-019. KPIs gerenciales = HU-025 (`/api/v1/dashboard`).
  */
 @Module({
   imports: [
