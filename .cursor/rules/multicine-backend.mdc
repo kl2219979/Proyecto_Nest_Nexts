@@ -65,6 +65,7 @@ alwaysApply: true
 - HU-023 fidelización y puntos (GET/POST /points, levels, cart apply, RN-099…101)
 - HU-019 Cine Flash (POST /cineflash/process, GET /movies/cineflash, cron, RN-080…086)
 - HU-021 Chatbot IA (POST /ai/chat, POST /ai/history, RN-091…095)
+- HU-022 recomendaciones personalizadas (GET /recommendations, POST /preferences, RN-096…098)
 
 ## Siguiente
-- HU-022 Motor de Recomendaciones Personalizadas
+- HU-025 Dashboard Gerencial de Indicadores (KPIs)

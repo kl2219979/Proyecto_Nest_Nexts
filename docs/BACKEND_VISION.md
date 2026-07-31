@@ -48,7 +48,8 @@
 | HU-023 Fidelización / puntos | **Hecho** | GET/POST /points · levels · cart apply · earn/redeem · RN-099…101 |
 | HU-019 Cine Flash | **Hecho** | Cron 5 min · POST /cineflash/process · GET /movies/cineflash · RN-080…086 |
 | HU-021 Chatbot IA | **Hecho** | POST /ai/chat · POST /ai/history · Adapter OpenAI stub · RN-091…095 |
-| HU-022 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-022) |
+| HU-022 Recomendaciones personalizadas | **Hecho** | GET /recommendations · POST /preferences · cron diario · RN-096…098 |
+| HU-025 … HU-029 (resto) | Pendiente | Ver sección 3 (siguiente: HU-025) |
 
 ### Bitácora de avances
 
@@ -257,6 +258,15 @@
 - Guía `docs/features/hu-021-ai-chatbot.md`.
 - Motor personalizado por historial → HU-022.
 
+#### HU-022 — Motor de Recomendaciones Personalizadas
+- Módulo `backend/src/recommendations/`: scoring + preferencias + snapshot diario.
+- Endpoints JWT: `GET /recommendations?cityId=`, `POST /recommendations/preferences`.
+- Señales: historial PAID (géneros, formatos, idiomas, complejos, día/hora), prefs explícitas, cine favorito del perfil.
+- RN-096 snapshot del día + cron 01:00 · RN-097 consentimiento `allowPurchaseHistory` / `allowProfileSignals` · RN-098 exclusión `recentlyViewedDays` (env default 30).
+- Entidades: `recommendation_preferences`, `recommendation_feeds` (cache-aside por usuario+ciudad).
+- Guía `docs/features/hu-022-recommendations.md`.
+- Dashboard KPIs gerenciales → HU-025.
+
 ---
 
 ## 1. Qué es este backend en una frase
@@ -447,6 +457,7 @@ Health OK
 - HU-023 guía: `docs/features/hu-023-loyalty.md`
 - HU-019 guía: `docs/features/hu-019-cineflash.md`
 - HU-021 guía: `docs/features/hu-021-ai-chatbot.md`
+- HU-022 guía: `docs/features/hu-022-recommendations.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -460,5 +471,5 @@ Proyecto: Plataforma Web Multicine (backend NestJS).
 Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
 Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
 Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-022 Motor de Recomendaciones Personalizadas.
+Siguiente: HU-025 Dashboard Gerencial de Indicadores (KPIs).
 ```

@@ -164,4 +164,16 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   OPENAI_API_KEY?: string;
+
+  /**
+   * Días por defecto para excluir películas ya vistas (HU-022 / RN-098).
+   * El usuario puede sobrescribirlo en preferencias.
+   * @default 30
+   */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  RECOMMENDATIONS_RECENTLY_VIEWED_DAYS: number = 30;
 }

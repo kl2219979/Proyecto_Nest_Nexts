@@ -16,7 +16,7 @@ import { OpenAiGatewayService } from './openai-gateway.service';
  * Reutiliza cartelera (`MoviesModule`), promociones y membresía.
  * El proveedor LLM queda aislado en `OpenAiGatewayService` (Adapter).
  *
- * Motor de recomendaciones personalizadas por historial = HU-022.
+ * Motor de recomendaciones personalizadas por historial → `RecommendationsModule` (HU-022).
  */
 @Module({
   imports: [

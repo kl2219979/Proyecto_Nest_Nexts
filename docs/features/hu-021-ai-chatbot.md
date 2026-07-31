@@ -100,6 +100,6 @@ sin tocar `AiService`. Bedrock = misma idea de sustitución.
 
 | Tema | HU |
 |---|---|
-| Motor de recomendaciones por historial de compras | HU-022 |
+| Motor de recomendaciones por historial de compras | HU-022 (`docs/features/hu-022-recommendations.md`) |
 | UI del widget / embed YouTube | Frontend |
 | OpenAI/Bedrock productivos | Stub + env opcional |

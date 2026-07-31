@@ -26,6 +26,7 @@ import { GiftcardsModule } from './giftcards/giftcards.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { CineflashModule } from './cineflash/cineflash.module';
 import { AiModule } from './ai/ai.module';
+import { RecommendationsModule } from './recommendations/recommendations.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -145,6 +146,8 @@ import { AiModule } from './ai/ai.module';
     CineflashModule,
     /** Chatbot IA de recomendaciones (HU-021). */
     AiModule,
+    /** Motor de recomendaciones personalizadas (HU-022). */
+    RecommendationsModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */
     AdminModule,
   ],
