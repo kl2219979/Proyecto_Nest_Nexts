@@ -52,7 +52,7 @@
 | HU-025 Dashboard gerencial (KPIs) | **Hecho** | GET /dashboard · export PDF/Excel · period/filtros · comparativos |
 | HU-027 Encuestas de satisfacción | **Hecho** | POST/GET /surveys · RN-108 asistencia · RN-109 1/compra |
 | HU-028 PQRS Integrado | **Hecho** | POST/GET/PUT /pqrs · SLA · asignación · RN-110…112 |
-| HU-029 API pública | Pendiente | Ver sección 3 (siguiente: HU-029) |
+| HU-029 API pública | **Hecho** | /public/* · OAuth+API Key · scopes · rate limit · auditoría · RN-113…118 |
 
 ### Bitácora de avances
 
@@ -298,6 +298,17 @@
 - Guía `docs/features/hu-028-pqrs.md`.
 - API pública → HU-029.
 
+#### HU-029 — API Pública para Aplicaciones Externas
+- Módulo `backend/src/public-api/`: `ApiClient` + `PublicApiAuditLog`.
+- Auth consumidor: `X-API-Key` u OAuth 2.0 `POST /oauth/token` (client_credentials).
+- Scopes: `catalog:read`, `auth:write`, `users:read`, `orders:read`, `giftcards:read`.
+- Rate limit por cliente (RN-114/116) + auditoría de requests (RN-117).
+- Facade `/api/v1/public/*` (catálogo, auth, perfil, membresía, órdenes, giftcards).
+- Admin: `CRUD /api/admin/api-clients` + `GET …/audit-logs`; seed `mcc_demo_kiosk`.
+- Extra: `GET /orders/:id` (first-party). Swagger `api-key` (RN-118).
+- Guía `docs/features/hu-029-public-api.md`.
+- **Backlog Sprint 5 completo** (no hay HU pendiente).
+
 ---
 
 ## 1. Qué es este backend en una frase
@@ -492,6 +503,7 @@ Health OK
 - HU-025 guía: `docs/features/hu-025-dashboard.md`
 - HU-027 guía: `docs/features/hu-027-surveys.md`
 - HU-028 guía: `docs/features/hu-028-pqrs.md`
+- HU-029 guía: `docs/features/hu-029-public-api.md`
 - Tooling: `docs/config/README.md`
 
 ---
@@ -502,8 +514,11 @@ Copia esto al iniciar el siguiente chat:
 
 ```text
 Proyecto: Plataforma Web Multicine (backend NestJS).
-Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora) y continúa SOLO con la siguiente HU pendiente.
-Temperatura baja: no inventes alcance fuera del backlog en recursos/PRODUCT_BACKLOG_ORDENADO.md.
-Mantén JSDoc educativo. Al terminar la HU, actualiza Estado + Bitácora en docs/BACKEND_VISION.md.
-Siguiente: HU-029 API Pública para Aplicaciones Externas.
+Lee docs/BACKEND_VISION.md (protocolo, estado, bitácora).
+Todas las HUs del backlog (HU-001…HU-029) están implementadas en backend.
+Temperatura baja: no inventes alcance fuera de recursos/PRODUCT_BACKLOG_ORDENADO.md.
+Si el usuario pide trabajo nuevo, acotar a bugs, hardening o lo que indique explícitamente.
+Mantén JSDoc educativo. Si cierras un cambio transversal, actualiza Estado/Bitácora solo si aplica.
 ```
+
+> **Nota:** El backlog ordenado termina en HU-029. No hay “siguiente HU” pendiente.

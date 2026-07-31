@@ -130,6 +130,53 @@ export class RescheduleService {
   }
 
   /**
+   * `GET /orders/:id`: detalle de una compra PAID del usuario (HU-029).
+   *
+   * @param userId - JWT.
+   * @param orderId - UUID de la orden.
+   */
+  async getPaidOrderById(
+    userId: string,
+    orderId: string,
+  ): Promise<PaidOrderSummary> {
+    const order = await this.loadOwnedPaidOrder(userId, orderId);
+    const validTickets = await this.ticketRepo.find({
+      where: { orderId: order.id, userId, status: TicketStatus.VALID },
+    });
+    const lines = order.tickets ?? [];
+    const first = lines[0];
+    const eligibility = this.evaluateEligibility(
+      first?.startsAt ?? null,
+      validTickets.length,
+    );
+
+    return {
+      orderId: order.id,
+      status: order.status,
+      movieId: first?.movieId ?? '',
+      movieTitle: first?.movieTitle ?? validTickets[0]?.movieTitle ?? '',
+      showtimeId: order.showtimeId,
+      startsAt:
+        (first?.startsAt ?? validTickets[0]?.startsAt)?.toISOString() ?? '',
+      cinemaName: order.cinemaName,
+      format: first?.format ?? validTickets[0]?.format ?? '',
+      language: first?.language ?? validTickets[0]?.language ?? '',
+      seatCount: lines.length,
+      seats: lines.map((l) => ({
+        seatId: l.seatId,
+        seatLabel: l.seatLabel,
+      })),
+      ticketsSubtotal: Number(order.ticketsSubtotal),
+      total: Number(order.total),
+      currency: order.currency,
+      canReschedule: eligibility.ok,
+      rescheduleBlockedReason: eligibility.reason,
+      validTicketCount: validTickets.length,
+      createdAt: order.createdAt.toISOString(),
+    };
+  }
+
+  /**
    * `GET /orders/:id/available-functions`: misma película, futuras (RN-066).
    *
    * @param userId - JWT.

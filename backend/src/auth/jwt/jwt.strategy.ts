@@ -25,7 +25,7 @@ export type AuthUser = {
  *
  * @remarks
  * **Patrón Strategy:** Passport permite intercambiar mecanismos de auth
- * (JWT hoy; mañana API key HU-029) sin reescribir los controllers.
+ * (JWT usuario; API Key / OAuth client = HU-029 en `public-api`).
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {

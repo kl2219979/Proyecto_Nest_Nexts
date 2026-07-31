@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../auth/jwt/jwt-auth.guard';
 import type { AuthUser } from '../auth/jwt/jwt.strategy';
 import {
   AvailableFunctionsForOrderResponse,
+  PaidOrderSummary,
   PaidOrdersListResponse,
   RescheduleResult,
 } from './dto/reschedule-response';
@@ -33,10 +34,11 @@ import {
 import { RescheduleService } from './reschedule.service';
 
 /**
- * Órdenes pagadas y cambio de función (HU-016).
+ * Órdenes pagadas y cambio de función (HU-016) + detalle (HU-029).
  *
  * Prefijo global `/api/v1`:
  * - `GET  /orders` — Mis compras (reservas PAID)
+ * - `GET  /orders/:id` — Detalle de una compra
  * - `GET  /orders/:id/available-functions` — funciones alternativas
  * - `PUT  /orders/:id/reschedule` — confirmar reprogramación
  *
@@ -74,7 +76,7 @@ export class OrdersController {
   /**
    * Funciones alternativas de la misma película.
    *
-   * Declarado antes de rutas más genéricas con el mismo prefijo.
+   * Declarado antes de `:id` genérico.
    *
    * @param user - JWT.
    * @param id - UUID de la orden.
@@ -99,6 +101,27 @@ export class OrdersController {
       id,
       query.cityId,
     );
+  }
+
+  /**
+   * Detalle de una compra PAID del usuario (HU-029).
+   *
+   * @param user - JWT.
+   * @param id - UUID de la orden.
+   */
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Detalle de una compra (orden PAID)',
+    description: 'HU-029 · solo el dueño · incluye canReschedule (RN-065).',
+  })
+  @ApiOkResponse({ description: 'Orden encontrada' })
+  @ApiNotFoundResponse({ description: 'Orden no encontrada' })
+  @ApiUnauthorizedResponse({ description: 'JWT ausente o inválido' })
+  getMine(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<PaidOrderSummary> {
+    return this.rescheduleService.getPaidOrderById(user.userId, id);
   }
 
   /**

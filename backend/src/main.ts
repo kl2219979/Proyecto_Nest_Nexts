@@ -73,15 +73,26 @@ async function bootstrap(): Promise<void> {
 
   /**
    * Metadatos de Swagger/OpenAPI.
-   * `addBearerAuth()` prepara el candado JWT (login + admin).
+   * `addBearerAuth()` → JWT usuario / admin.
+   * `addApiKey()` → consumidores externos HU-029 (`X-API-Key`).
    */
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Multicine API')
     .setDescription(
-      'API REST de la Plataforma Web Multicine (`/api/v1` + backoffice `/api/admin`)',
+      'API REST de la Plataforma Web Multicine (`/api/v1` + backoffice `/api/admin` + API pública `/api/v1/public`)',
     )
     .setVersion('1.0')
     .addBearerAuth()
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'X-API-Key',
+        in: 'header',
+        description:
+          'API Key de consumidor externo (HU-029). Alternativa: POST /oauth/token',
+      },
+      'api-key',
+    )
     .build();
 
   /** Genera el documento OpenAPI recorriendo controladores y decoradores `@Api*`. */

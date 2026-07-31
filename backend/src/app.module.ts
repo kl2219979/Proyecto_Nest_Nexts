@@ -30,6 +30,7 @@ import { RecommendationsModule } from './recommendations/recommendations.module'
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SurveysModule } from './surveys/surveys.module';
 import { PqrsModule } from './pqrs/pqrs.module';
+import { PublicApiModule } from './public-api/public-api.module';
 
 /**
  * Módulo raíz de NestJS.
@@ -157,6 +158,8 @@ import { PqrsModule } from './pqrs/pqrs.module';
     SurveysModule,
     /** PQRS integrado (HU-028). */
     PqrsModule,
+    /** API pública para apps externas (HU-029). */
+    PublicApiModule,
     /** Panel administrativo / RBAC (HU-020) + CRUD promos. */
     AdminModule,
   ],
